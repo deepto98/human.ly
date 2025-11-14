@@ -2,13 +2,13 @@
  * Centralized site configuration, add whatever you need here.
  */
 export default {
-  siteTitle: "Convex SaaS",
+  siteTitle: "Humanly",
   siteDescription:
-    "A Lightweight, Production-Ready Convex Stack for your next SaaS Application.",
-  siteUrl: "https://convex.dev",
+    "Reinventing interviews with AI-powered agents. Create intelligent interview experiences that adapt, evaluate, and engage.",
+  siteUrl: "https://humanly.dev",
   siteImage: "/images/og-image.png",
   favicon: "/favicon.ico",
-  twitterHandle: "",
-  email: "",
+  twitterHandle: "@humanly_ai",
+  email: "hello@humanly.dev",
   address: "",
 };
