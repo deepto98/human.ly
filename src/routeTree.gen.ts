@@ -24,6 +24,7 @@ import { Route as AppAuthDashboardLayoutIndexImport } from './routes/_app/_auth/
 import { Route as AppAuthOnboardingLayoutUsernameImport } from './routes/_app/_auth/onboarding/_layout.username'
 import { Route as AppAuthDashboardLayoutSettingsImport } from './routes/_app/_auth/dashboard/_layout.settings'
 import { Route as AppAuthDashboardLayoutCheckoutImport } from './routes/_app/_auth/dashboard/_layout.checkout'
+import { Route as AppAuthAgentsCreateKnowledgeSourcesImport } from './routes/_app/_auth/agents/create/knowledge-sources'
 import { Route as AppAuthDashboardLayoutSettingsIndexImport } from './routes/_app/_auth/dashboard/_layout.settings.index'
 import { Route as AppAuthDashboardLayoutSettingsBillingImport } from './routes/_app/_auth/dashboard/_layout.settings.billing'
 
@@ -107,6 +108,12 @@ const AppAuthDashboardLayoutCheckoutRoute =
   AppAuthDashboardLayoutCheckoutImport.update({
     path: '/checkout',
     getParentRoute: () => AppAuthDashboardLayoutRoute,
+  } as any)
+
+const AppAuthAgentsCreateKnowledgeSourcesRoute =
+  AppAuthAgentsCreateKnowledgeSourcesImport.update({
+    path: '/agents/create/knowledge-sources',
+    getParentRoute: () => AppAuthRoute,
   } as any)
 
 const AppAuthDashboardLayoutSettingsIndexRoute =
@@ -195,6 +202,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLoginLayoutIndexImport
       parentRoute: typeof AppLoginLayoutImport
     }
+    '/_app/_auth/agents/create/knowledge-sources': {
+      id: '/_app/_auth/agents/create/knowledge-sources'
+      path: '/agents/create/knowledge-sources'
+      fullPath: '/agents/create/knowledge-sources'
+      preLoaderRoute: typeof AppAuthAgentsCreateKnowledgeSourcesImport
+      parentRoute: typeof AppAuthImport
+    }
     '/_app/_auth/dashboard/_layout/checkout': {
       id: '/_app/_auth/dashboard/_layout/checkout'
       path: '/checkout'
@@ -262,6 +276,7 @@ export const routeTree = rootRoute.addChildren({
           AppAuthOnboardingLayoutUsernameRoute,
         }),
       }),
+      AppAuthAgentsCreateKnowledgeSourcesRoute,
     }),
     AppLoginRoute: AppLoginRoute.addChildren({
       AppLoginLayoutRoute: AppLoginLayoutRoute.addChildren({
@@ -298,7 +313,8 @@ export const routeTree = rootRoute.addChildren({
       "parent": "/_app",
       "children": [
         "/_app/_auth/dashboard",
-        "/_app/_auth/onboarding"
+        "/_app/_auth/onboarding",
+        "/_app/_auth/agents/create/knowledge-sources"
       ]
     },
     "/_app/login": {
@@ -348,6 +364,10 @@ export const routeTree = rootRoute.addChildren({
     "/_app/login/_layout/": {
       "filePath": "_app/login/_layout.index.tsx",
       "parent": "/_app/login/_layout"
+    },
+    "/_app/_auth/agents/create/knowledge-sources": {
+      "filePath": "_app/_auth/agents/create/knowledge-sources.tsx",
+      "parent": "/_app/_auth"
     },
     "/_app/_auth/dashboard/_layout/checkout": {
       "filePath": "_app/_auth/dashboard/_layout.checkout.tsx",
