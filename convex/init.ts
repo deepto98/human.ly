@@ -61,12 +61,21 @@ export const insertSeedPlan = internalMutation({
 export default internalAction(async (ctx) => {
   /**
    * Stripe Products.
+   * Skip if Stripe is not configured (optional for Humanly platform)
    */
-  const products = await stripe.products.list({
-    limit: 1,
-  });
-  if (products?.data?.length) {
-    console.info("🏃‍♂️ Skipping Stripe products creation and seeding.");
+  
+  // Check if Stripe is configured
+  try {
+    const products = await stripe.products.list({
+      limit: 1,
+    });
+    if (products?.data?.length) {
+      console.info("🏃‍♂️ Skipping Stripe products creation and seeding.");
+      return;
+    }
+  } catch (error) {
+    console.info("⚠️ Stripe not configured - skipping Stripe initialization. This is optional for Humanly.");
+    console.info("   Add STRIPE_SECRET_KEY to .env.local to enable subscription features.");
     return;
   }
 
