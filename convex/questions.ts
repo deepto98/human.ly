@@ -4,7 +4,7 @@
 
 import { v } from "convex/values";
 import { action, mutation, query } from "./_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
+import { auth } from "./auth";
 import { questionTypeValidator } from "./schema";
 import { api } from "./_generated/api";
 import {
@@ -142,7 +142,7 @@ export const createQuestion = mutation({
     keyPoints: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await auth.getUserId(ctx);
     if (!userId) {
       throw new Error("Unauthorized");
     }
@@ -203,7 +203,7 @@ export const updateQuestion = mutation({
     keyPoints: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await auth.getUserId(ctx);
     if (!userId) {
       throw new Error("Unauthorized");
     }
@@ -234,7 +234,7 @@ export const deleteQuestion = mutation({
     questionId: v.id("questions"),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await auth.getUserId(ctx);
     if (!userId) {
       throw new Error("Unauthorized");
     }
@@ -277,7 +277,7 @@ export const reorderQuestions = mutation({
     questionIds: v.array(v.id("questions")),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await auth.getUserId(ctx);
     if (!userId) {
       throw new Error("Unauthorized");
     }
@@ -338,7 +338,7 @@ export const deleteAllQuestions = mutation({
     agentId: v.id("interviewAgents"),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await auth.getUserId(ctx);
     if (!userId) {
       throw new Error("Unauthorized");
     }

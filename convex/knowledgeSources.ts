@@ -3,8 +3,8 @@
  */
 
 import { v } from "convex/values";
-import { action, mutation, query, internalAction } from "./_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
+import { action, mutation, query, internalMutation } from "./_generated/server";
+import { auth } from "./auth";
 import { knowledgeSourceTypeValidator } from "./schema";
 import { api, internal } from "./_generated/api";
 import {
@@ -25,7 +25,7 @@ export const addTopicSource = mutation({
     topic: v.string(),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await auth.getUserId(ctx);
     if (!userId) {
       throw new Error("Unauthorized");
     }
@@ -54,13 +54,13 @@ export const addUrlSource = action({
     agentId: v.id("interviewAgents"),
     url: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<string> => {
     // Scrape the URL
     const scraped = await scrapeUrl(args.url);
     const cleanContent = extractMainContent(scraped.content);
 
     // Store in database
-    const sourceId = await ctx.runMutation(internal.knowledgeSources.insertUrlSource, {
+    const sourceId: string = await ctx.runMutation(internal.knowledgeSources.insertUrlSource, {
       agentId: args.agentId,
       url: args.url,
       scrapedContent: cleanContent,
@@ -75,7 +75,7 @@ export const addUrlSource = action({
 /**
  * Internal mutation to insert URL source
  */
-export const insertUrlSource = internalAction({
+export const insertUrlSource = internalMutation({
   args: {
     agentId: v.id("interviewAgents"),
     url: v.string(),
@@ -83,8 +83,8 @@ export const insertUrlSource = internalAction({
     title: v.optional(v.string()),
     metadata: v.optional(v.any()),
   },
-  handler: async (ctx, args) => {
-    const sourceId = await ctx.runMutation(api.knowledgeSources.createSource, {
+  handler: async (ctx, args): Promise<string> => {
+    const sourceId: string = await ctx.runMutation(api.knowledgeSources.createSource, {
       agentId: args.agentId,
       type: "url",
       content: args.url,
@@ -109,7 +109,7 @@ export const createSource = mutation({
     metadata: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await auth.getUserId(ctx);
     if (!userId) {
       throw new Error("Unauthorized");
     }
@@ -150,13 +150,13 @@ export const addWebSearchSources = action({
     agentId: v.id("interviewAgents"),
     urls: v.array(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<(string | null)[]> => {
     // Scrape all URLs in parallel
     const scrapedResults = await scrapeUrls(args.urls);
 
     // Store each successful scrape
-    const sourceIds = await Promise.all(
-      scrapedResults.map(async (result) => {
+    const sourceIds: (string | null)[] = await Promise.all(
+      scrapedResults.map(async (result): Promise<string | null> => {
         if (result.error || !result.content) {
           return null;
         }
@@ -173,7 +173,7 @@ export const addWebSearchSources = action({
       })
     );
 
-    return sourceIds.filter((id) => id !== null);
+    return sourceIds.filter((id: string | null) => id !== null);
   },
 });
 
@@ -187,11 +187,14 @@ export const uploadDocumentSource = action({
     fileData: v.bytes(),
     contentType: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<string> => {
+    // Convert ArrayBuffer to Uint8Array
+    const uint8Array = new Uint8Array(args.fileData);
+    
     // Upload to R2
     const uploadResult = await uploadDocument(
       args.filename,
-      args.fileData,
+      uint8Array,
       args.contentType
     );
 
@@ -200,7 +203,7 @@ export const uploadDocumentSource = action({
     const cleanContent = extractMainContent(scraped.content);
 
     // Store in database
-    const sourceId = await ctx.runMutation(api.knowledgeSources.createSource, {
+    const sourceId: string = await ctx.runMutation(api.knowledgeSources.createSource, {
       agentId: args.agentId,
       type: "document",
       content: args.filename,
@@ -225,7 +228,7 @@ export const deleteSource = mutation({
     sourceId: v.id("knowledgeSources"),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await auth.getUserId(ctx);
     if (!userId) {
       throw new Error("Unauthorized");
     }

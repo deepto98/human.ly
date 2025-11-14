@@ -25,7 +25,7 @@ export async function scrapeUrl(url: string): Promise<{
   try {
     const firecrawl = getFirecrawlClient();
     
-    const result = await firecrawl.scrapeUrl(url, {
+    const result = await firecrawl.scrape(url, {
       formats: ["markdown", "html"],
     });
 
@@ -98,7 +98,10 @@ export async function searchWeb(query: string, maxResults: number = 10): Promise
       limit: maxResults,
     });
 
-    return searchResults.map((result: any) => ({
+    // searchResults is a SearchData object with a data array
+    const results = Array.isArray(searchResults) ? searchResults : (searchResults as any).data || [];
+
+    return results.map((result: any) => ({
       url: result.url,
       title: result.title || "",
       description: result.description || "",
@@ -122,7 +125,7 @@ export async function scrapeDocument(documentUrl: string): Promise<{
     const firecrawl = getFirecrawlClient();
     
     // Firecrawl can extract text from PDFs and documents via URL
-    const result = await firecrawl.scrapeUrl(documentUrl, {
+    const result = await firecrawl.scrape(documentUrl, {
       formats: ["markdown"],
     });
 
