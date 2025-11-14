@@ -216,7 +216,7 @@ export const deleteAgent = mutation({
 export const getMyAgents = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await auth.getUserId(ctx);
     if (!userId) {
       return [];
     }

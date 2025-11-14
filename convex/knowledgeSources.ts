@@ -84,12 +84,24 @@ export const insertUrlSource = internalMutation({
     metadata: v.optional(v.any()),
   },
   handler: async (ctx, args): Promise<string> => {
-    const sourceId: string = await ctx.runMutation(api.knowledgeSources.createSource, {
+    // Get userId for auth check
+    const userId = await auth.getUserId(ctx);
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const agent = await ctx.db.get(args.agentId);
+    if (!agent || agent.creatorId !== userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const sourceId = await ctx.db.insert("knowledgeSources", {
       agentId: args.agentId,
-      type: "url",
+      type: "url" as const,
       content: args.url,
       scrapedContent: args.scrapedContent,
       metadata: { title: args.title, ...args.metadata },
+      createdAt: Date.now(),
     });
 
     return sourceId;
