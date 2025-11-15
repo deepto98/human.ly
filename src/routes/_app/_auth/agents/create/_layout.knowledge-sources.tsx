@@ -50,9 +50,9 @@ function KnowledgeSourcesPage() {
   // Initialize agent on mount
   useEffect(() => {
     const initAgent = async () => {
-      if (!agentId && !createAgent.isPending) {
+      if (!agentId) {
         try {
-          const id = await createAgent.mutateAsync({});
+          const id = await createAgent({});
           setAgentId(id as string);
         } catch (error) {
           console.error("Failed to create agent:", error);
@@ -65,7 +65,7 @@ function KnowledgeSourcesPage() {
   const handleTopicSubmit = async () => {
     if (!agentId || !topic.trim()) return;
 
-    await addTopicSource.mutateAsync({
+    await addTopicSource({
       agentId: agentId as any,
       topic: topic.trim(),
     });
@@ -88,7 +88,7 @@ function KnowledgeSourcesPage() {
     if (!agentId || urls.length === 0) return;
 
     for (const url of urls) {
-      await addUrlSource.mutateAsync({
+      await addUrlSource({
         agentId: agentId as any,
         url,
       });
@@ -100,7 +100,7 @@ function KnowledgeSourcesPage() {
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
 
-    const results = await searchWeb.mutateAsync({
+    const results = await searchWeb({
       query: searchQuery.trim(),
       maxResults: 10,
     });
@@ -121,7 +121,7 @@ function KnowledgeSourcesPage() {
   const handleSearchSubmit = async () => {
     if (!agentId || selectedUrls.size === 0) return;
 
-    await addWebSearchSources.mutateAsync({
+    await addWebSearchSources({
       agentId: agentId as any,
       urls: Array.from(selectedUrls),
     });
