@@ -1,0 +1,1 @@
+npx @convex-dev/auth to set site_url

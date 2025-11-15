@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Logo } from "../ui/logo";
 import { cn } from "@/utils/misc";
 import { buttonVariants } from "@/ui/button-util";
@@ -6,9 +6,10 @@ import { Loader2, ArrowRight, Sparkles, Users, Brain } from "lucide-react";
 import { Button } from "@/ui/button";
 import siteConfig from "~/site.config";
 import { useConvexAuth } from "@convex-dev/react-query";
-import { Route as AuthLoginRoute } from "@/routes/_app/login/_layout.index";
 import { Route as DashboardRoute } from "@/routes/_app/_auth/dashboard/_layout.index";
 import { motion } from "framer-motion";
+import { AuthModal } from "@/ui/auth-modal";
+import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -16,6 +17,15 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const { isLoading, isAuthenticated } = useConvexAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const navigate = useNavigate();
+
+  // Redirect to dashboard if authenticated
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      navigate({ to: DashboardRoute.fullPath });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   return (
     <div className="relative min-h-screen w-full bg-amber-50">
@@ -26,21 +36,27 @@ function Index() {
             <Logo showText={true} />
           </Link>
           <div className="flex items-center gap-4">
-            <Link
-              to={
-                isAuthenticated
-                  ? DashboardRoute.fullPath
-                  : AuthLoginRoute.fullPath
-              }
-              className={cn(
-                "relative border-[3px] border-black bg-orange-400 px-6 py-2 font-bold uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[4px]"
-              )}
-              disabled={isLoading}
-            >
-              {isLoading && <Loader2 className="animate-spin h-4 w-4 mr-2 inline" />}
-              {!isLoading && isAuthenticated && "Dashboard"}
-              {!isLoading && !isAuthenticated && "Get Started"}
-            </Link>
+            {isAuthenticated ? (
+              <Link
+                to={DashboardRoute.fullPath}
+                className={cn(
+                  "relative border-[3px] border-black bg-orange-400 px-6 py-2 font-bold uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px]"
+                )}
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                disabled={isLoading}
+                className={cn(
+                  "relative border-[3px] border-black bg-orange-400 px-6 py-2 font-bold uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px]"
+                )}
+              >
+                {isLoading && <Loader2 className="animate-spin h-4 w-4 mr-2 inline" />}
+                {!isLoading && "Get Started"}
+              </button>
+            )}
           </div>
         </div>
       </nav>
@@ -86,8 +102,8 @@ function Index() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link
-                to={AuthLoginRoute.fullPath}
+              <button
+                onClick={() => setShowAuthModal(true)}
                 className="group relative"
               >
                 <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
@@ -97,7 +113,7 @@ function Index() {
                     <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                   </span>
                 </div>
-              </Link>
+              </button>
             </div>
           </motion.div>
 
@@ -287,8 +303,8 @@ function Index() {
             Join the future of talent assessment. Create your first AI interview
             agent in minutes.
           </p>
-          <Link
-            to={AuthLoginRoute.fullPath}
+          <button
+            onClick={() => setShowAuthModal(true)}
             className="group inline-block relative"
           >
             <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
@@ -298,7 +314,7 @@ function Index() {
                 <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-1" />
               </span>
             </div>
-          </Link>
+          </button>
         </div>
       </section>
 
@@ -313,6 +329,9 @@ function Index() {
           </div>
         </div>
       </footer>
+
+      {/* Auth Modal */}
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </div>
   );
 }
