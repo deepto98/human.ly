@@ -22,6 +22,7 @@ import type * as email_templates_subscriptionEmail from "../email/templates/subs
 import type * as env from "../env.js";
 import type * as http from "../http.js";
 import type * as init from "../init.js";
+import type * as interviews from "../interviews.js";
 import type * as knowledgeSources from "../knowledgeSources.js";
 import type * as lib_firecrawl from "../lib/firecrawl.js";
 import type * as lib_openai from "../lib/openai.js";
@@ -48,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   env: typeof env;
   http: typeof http;
   init: typeof init;
+  interviews: typeof interviews;
   knowledgeSources: typeof knowledgeSources;
   "lib/firecrawl": typeof lib_firecrawl;
   "lib/openai": typeof lib_openai;
