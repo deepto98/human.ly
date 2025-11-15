@@ -106,3 +106,51 @@ img {
   background-image: linear-gradient(90deg, var(--muted-grid) 1px, transparent 0),
     linear-gradient(180deg, var(--muted-grid) 1px, transparent 0);
 }
+
+/*
+* Neobrutalist Utilities
+*/
+.neo-border {
+  @apply border-[3px] border-black;
+}
+
+.neo-border-thick {
+  @apply border-[4px] border-black;
+}
+
+.neo-shadow {
+  @apply shadow-[4px_4px_0px_0px_rgba(0,0,0,1)];
+}
+
+.neo-shadow-sm {
+  @apply shadow-[2px_2px_0px_0px_rgba(0,0,0,1)];
+}
+
+.neo-shadow-lg {
+  @apply shadow-[6px_6px_0px_0px_rgba(0,0,0,1)];
+}
+
+.neo-shadow-xl {
+  @apply shadow-[8px_8px_0px_0px_rgba(0,0,0,1)];
+}
+
+/* Neobrutalist button hover effect */
+.neo-button-hover {
+  @apply transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)];
+}
+
+/* Offset shadow element */
+.neo-offset-shadow::before {
+  content: "";
+  @apply absolute -bottom-2 -right-2 h-full w-full bg-black -z-10;
+}
+
+/* Animated underline */
+.neo-underline {
+  @apply relative;
+}
+
+.neo-underline::after {
+  content: "";
+  @apply absolute -bottom-1 left-0 h-3 w-full bg-orange-400 -rotate-1 -z-10;
+}

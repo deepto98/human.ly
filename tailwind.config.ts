@@ -52,6 +52,21 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Neobrutalist color palette
+        neo: {
+          orange: "#fb923c",
+          cyan: "#67e8f9",
+          lime: "#bef264",
+          pink: "#f9a8d4",
+          yellow: "#fde047",
+        },
+      },
+      boxShadow: {
+        // Neobrutalist shadows
+        "neo-sm": "2px 2px 0px 0px rgba(0,0,0,1)",
+        "neo-md": "4px 4px 0px 0px rgba(0,0,0,1)",
+        "neo-lg": "6px 6px 0px 0px rgba(0,0,0,1)",
+        "neo-xl": "8px 8px 0px 0px rgba(0,0,0,1)",
       },
       borderRadius: {
         lg: "var(--radius)",
