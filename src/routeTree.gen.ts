@@ -15,6 +15,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Route as rootRoute } from './routes/__root'
 import { Route as AppImport } from './routes/_app'
 import { Route as IndexImport } from './routes/index'
+import { Route as InterviewShareableLinkImport } from './routes/interview.$shareableLink'
 import { Route as AppAuthImport } from './routes/_app/_auth'
 import { Route as AppLoginLayoutImport } from './routes/_app/login/_layout'
 import { Route as AppLoginLayoutIndexImport } from './routes/_app/login/_layout.index'
@@ -25,11 +26,13 @@ import { Route as AppAuthOnboardingLayoutUsernameImport } from './routes/_app/_a
 import { Route as AppAuthDashboardLayoutSettingsImport } from './routes/_app/_auth/dashboard/_layout.settings'
 import { Route as AppAuthDashboardLayoutCheckoutImport } from './routes/_app/_auth/dashboard/_layout.checkout'
 import { Route as AppAuthAgentsCreateLayoutImport } from './routes/_app/_auth/agents/create/_layout'
+import { Route as AppAuthAgentsAgentIdAttemptsImport } from './routes/_app/_auth/agents/$agentId.attempts'
 import { Route as AppAuthDashboardLayoutSettingsIndexImport } from './routes/_app/_auth/dashboard/_layout.settings.index'
 import { Route as AppAuthDashboardLayoutSettingsBillingImport } from './routes/_app/_auth/dashboard/_layout.settings.billing'
 import { Route as AppAuthAgentsCreateLayoutQuestionsImport } from './routes/_app/_auth/agents/create/_layout.questions'
 import { Route as AppAuthAgentsCreateLayoutKnowledgeSourcesImport } from './routes/_app/_auth/agents/create/_layout.knowledge-sources'
 import { Route as AppAuthAgentsCreateLayoutBehaviorImport } from './routes/_app/_auth/agents/create/_layout.behavior'
+import { Route as AppAuthAgentsAgentIdAttemptsAttemptIdImport } from './routes/_app/_auth/agents/$agentId.attempts.$attemptId'
 
 // Create Virtual Routes
 
@@ -53,6 +56,11 @@ const IndexRoute = IndexImport.update({
 const AppLoginRoute = AppLoginImport.update({
   path: '/login',
   getParentRoute: () => AppRoute,
+} as any)
+
+const InterviewShareableLinkRoute = InterviewShareableLinkImport.update({
+  path: '/interview/$shareableLink',
+  getParentRoute: () => rootRoute,
 } as any)
 
 const AppAuthRoute = AppAuthImport.update({
@@ -124,6 +132,12 @@ const AppAuthAgentsCreateLayoutRoute = AppAuthAgentsCreateLayoutImport.update({
   getParentRoute: () => AppAuthAgentsCreateRoute,
 } as any)
 
+const AppAuthAgentsAgentIdAttemptsRoute =
+  AppAuthAgentsAgentIdAttemptsImport.update({
+    path: '/agents/$agentId/attempts',
+    getParentRoute: () => AppAuthRoute,
+  } as any)
+
 const AppAuthDashboardLayoutSettingsIndexRoute =
   AppAuthDashboardLayoutSettingsIndexImport.update({
     path: '/',
@@ -154,6 +168,12 @@ const AppAuthAgentsCreateLayoutBehaviorRoute =
     getParentRoute: () => AppAuthAgentsCreateLayoutRoute,
   } as any)
 
+const AppAuthAgentsAgentIdAttemptsAttemptIdRoute =
+  AppAuthAgentsAgentIdAttemptsAttemptIdImport.update({
+    path: '/$attemptId',
+    getParentRoute: () => AppAuthAgentsAgentIdAttemptsRoute,
+  } as any)
+
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
@@ -178,6 +198,13 @@ declare module '@tanstack/react-router' {
       fullPath: ''
       preLoaderRoute: typeof AppAuthImport
       parentRoute: typeof AppImport
+    }
+    '/interview/$shareableLink': {
+      id: '/interview/$shareableLink'
+      path: '/interview/$shareableLink'
+      fullPath: '/interview/$shareableLink'
+      preLoaderRoute: typeof InterviewShareableLinkImport
+      parentRoute: typeof rootRoute
     }
     '/_app/login': {
       id: '/_app/login'
@@ -228,6 +255,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLoginLayoutIndexImport
       parentRoute: typeof AppLoginLayoutImport
     }
+    '/_app/_auth/agents/$agentId/attempts': {
+      id: '/_app/_auth/agents/$agentId/attempts'
+      path: '/agents/$agentId/attempts'
+      fullPath: '/agents/$agentId/attempts'
+      preLoaderRoute: typeof AppAuthAgentsAgentIdAttemptsImport
+      parentRoute: typeof AppAuthImport
+    }
     '/_app/_auth/agents/create': {
       id: '/_app/_auth/agents/create'
       path: '/agents/create'
@@ -269,6 +303,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/'
       preLoaderRoute: typeof AppAuthDashboardLayoutIndexImport
       parentRoute: typeof AppAuthDashboardLayoutImport
+    }
+    '/_app/_auth/agents/$agentId/attempts/$attemptId': {
+      id: '/_app/_auth/agents/$agentId/attempts/$attemptId'
+      path: '/$attemptId'
+      fullPath: '/agents/$agentId/attempts/$attemptId'
+      preLoaderRoute: typeof AppAuthAgentsAgentIdAttemptsAttemptIdImport
+      parentRoute: typeof AppAuthAgentsAgentIdAttemptsImport
     }
     '/_app/_auth/agents/create/_layout/behavior': {
       id: '/_app/_auth/agents/create/_layout/behavior'
@@ -330,6 +371,10 @@ export const routeTree = rootRoute.addChildren({
           AppAuthOnboardingLayoutUsernameRoute,
         }),
       }),
+      AppAuthAgentsAgentIdAttemptsRoute:
+        AppAuthAgentsAgentIdAttemptsRoute.addChildren({
+          AppAuthAgentsAgentIdAttemptsAttemptIdRoute,
+        }),
       AppAuthAgentsCreateRoute: AppAuthAgentsCreateRoute.addChildren({
         AppAuthAgentsCreateLayoutRoute:
           AppAuthAgentsCreateLayoutRoute.addChildren({
@@ -345,6 +390,7 @@ export const routeTree = rootRoute.addChildren({
       }),
     }),
   }),
+  InterviewShareableLinkRoute,
 })
 
 /* prettier-ignore-end */
@@ -356,7 +402,8 @@ export const routeTree = rootRoute.addChildren({
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/_app"
+        "/_app",
+        "/interview/$shareableLink"
       ]
     },
     "/": {
@@ -375,8 +422,12 @@ export const routeTree = rootRoute.addChildren({
       "children": [
         "/_app/_auth/dashboard",
         "/_app/_auth/onboarding",
+        "/_app/_auth/agents/$agentId/attempts",
         "/_app/_auth/agents/create"
       ]
+    },
+    "/interview/$shareableLink": {
+      "filePath": "interview.$shareableLink.tsx"
     },
     "/_app/login": {
       "filePath": "_app/login",
@@ -426,6 +477,13 @@ export const routeTree = rootRoute.addChildren({
       "filePath": "_app/login/_layout.index.tsx",
       "parent": "/_app/login/_layout"
     },
+    "/_app/_auth/agents/$agentId/attempts": {
+      "filePath": "_app/_auth/agents/$agentId.attempts.tsx",
+      "parent": "/_app/_auth",
+      "children": [
+        "/_app/_auth/agents/$agentId/attempts/$attemptId"
+      ]
+    },
     "/_app/_auth/agents/create": {
       "filePath": "_app/_auth/agents/create",
       "parent": "/_app/_auth",
@@ -461,6 +519,10 @@ export const routeTree = rootRoute.addChildren({
     "/_app/_auth/dashboard/_layout/": {
       "filePath": "_app/_auth/dashboard/_layout.index.tsx",
       "parent": "/_app/_auth/dashboard/_layout"
+    },
+    "/_app/_auth/agents/$agentId/attempts/$attemptId": {
+      "filePath": "_app/_auth/agents/$agentId.attempts.$attemptId.tsx",
+      "parent": "/_app/_auth/agents/$agentId/attempts"
     },
     "/_app/_auth/agents/create/_layout/behavior": {
       "filePath": "_app/_auth/agents/create/_layout.behavior.tsx",

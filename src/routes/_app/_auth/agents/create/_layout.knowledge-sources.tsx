@@ -49,12 +49,18 @@ function KnowledgeSourcesPage() {
 
   // Initialize agent on mount
   useEffect(() => {
-    if (!agentId) {
-      createAgent.mutate({}, {
-        onSuccess: (id) => setAgentId(id as string),
-      });
-    }
-  }, []);
+    const initAgent = async () => {
+      if (!agentId && !createAgent.isPending) {
+        try {
+          const id = await createAgent.mutateAsync({});
+          setAgentId(id as string);
+        } catch (error) {
+          console.error("Failed to create agent:", error);
+        }
+      }
+    };
+    initAgent();
+  }, [agentId]);
 
   const handleTopicSubmit = async () => {
     if (!agentId || !topic.trim()) return;
