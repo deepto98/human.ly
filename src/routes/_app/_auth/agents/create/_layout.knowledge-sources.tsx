@@ -8,7 +8,7 @@ import { Input } from "@/ui/input";
 import { Loader2, Plus, X, Search, Upload, Link as LinkIcon, Lightbulb, ArrowRight } from "lucide-react";
 import { cn } from "@/utils/misc";
 
-export const Route = createFileRoute("/_app/_auth/agents/create/knowledge-sources")({
+export const Route = createFileRoute("/_app/_auth/agents/create/_layout/knowledge-sources")({
   component: KnowledgeSourcesPage,
 });
 
@@ -62,7 +62,7 @@ function KnowledgeSourcesPage() {
       topic: topic.trim(),
     });
 
-    navigate({ to: "/agents/create/questions", search: { agentId } });
+    navigate({ to: "/agents/create/questions", search: { agentId: agentId } });
   };
 
   const handleAddUrl = () => {
@@ -86,7 +86,7 @@ function KnowledgeSourcesPage() {
       });
     }
 
-    navigate({ to: "/agents/create/questions", search: { agentId } });
+    navigate({ to: "/agents/create/questions", search: { agentId: agentId } });
   };
 
   const handleSearch = async () => {
@@ -118,7 +118,7 @@ function KnowledgeSourcesPage() {
       urls: Array.from(selectedUrls),
     });
 
-    navigate({ to: "/agents/create/questions", search: { agentId } });
+    navigate({ to: "/agents/create/questions", search: { agentId: agentId } });
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
