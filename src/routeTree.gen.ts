@@ -27,7 +27,9 @@ import { Route as AppAuthDashboardLayoutCheckoutImport } from './routes/_app/_au
 import { Route as AppAuthAgentsCreateLayoutImport } from './routes/_app/_auth/agents/create/_layout'
 import { Route as AppAuthDashboardLayoutSettingsIndexImport } from './routes/_app/_auth/dashboard/_layout.settings.index'
 import { Route as AppAuthDashboardLayoutSettingsBillingImport } from './routes/_app/_auth/dashboard/_layout.settings.billing'
+import { Route as AppAuthAgentsCreateLayoutQuestionsImport } from './routes/_app/_auth/agents/create/_layout.questions'
 import { Route as AppAuthAgentsCreateLayoutKnowledgeSourcesImport } from './routes/_app/_auth/agents/create/_layout.knowledge-sources'
+import { Route as AppAuthAgentsCreateLayoutBehaviorImport } from './routes/_app/_auth/agents/create/_layout.behavior'
 
 // Create Virtual Routes
 
@@ -134,9 +136,21 @@ const AppAuthDashboardLayoutSettingsBillingRoute =
     getParentRoute: () => AppAuthDashboardLayoutSettingsRoute,
   } as any)
 
+const AppAuthAgentsCreateLayoutQuestionsRoute =
+  AppAuthAgentsCreateLayoutQuestionsImport.update({
+    path: '/questions',
+    getParentRoute: () => AppAuthAgentsCreateLayoutRoute,
+  } as any)
+
 const AppAuthAgentsCreateLayoutKnowledgeSourcesRoute =
   AppAuthAgentsCreateLayoutKnowledgeSourcesImport.update({
     path: '/knowledge-sources',
+    getParentRoute: () => AppAuthAgentsCreateLayoutRoute,
+  } as any)
+
+const AppAuthAgentsCreateLayoutBehaviorRoute =
+  AppAuthAgentsCreateLayoutBehaviorImport.update({
+    path: '/behavior',
     getParentRoute: () => AppAuthAgentsCreateLayoutRoute,
   } as any)
 
@@ -256,11 +270,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuthDashboardLayoutIndexImport
       parentRoute: typeof AppAuthDashboardLayoutImport
     }
+    '/_app/_auth/agents/create/_layout/behavior': {
+      id: '/_app/_auth/agents/create/_layout/behavior'
+      path: '/behavior'
+      fullPath: '/agents/create/behavior'
+      preLoaderRoute: typeof AppAuthAgentsCreateLayoutBehaviorImport
+      parentRoute: typeof AppAuthAgentsCreateLayoutImport
+    }
     '/_app/_auth/agents/create/_layout/knowledge-sources': {
       id: '/_app/_auth/agents/create/_layout/knowledge-sources'
       path: '/knowledge-sources'
       fullPath: '/agents/create/knowledge-sources'
       preLoaderRoute: typeof AppAuthAgentsCreateLayoutKnowledgeSourcesImport
+      parentRoute: typeof AppAuthAgentsCreateLayoutImport
+    }
+    '/_app/_auth/agents/create/_layout/questions': {
+      id: '/_app/_auth/agents/create/_layout/questions'
+      path: '/questions'
+      fullPath: '/agents/create/questions'
+      preLoaderRoute: typeof AppAuthAgentsCreateLayoutQuestionsImport
       parentRoute: typeof AppAuthAgentsCreateLayoutImport
     }
     '/_app/_auth/dashboard/_layout/settings/billing': {
@@ -305,7 +333,9 @@ export const routeTree = rootRoute.addChildren({
       AppAuthAgentsCreateRoute: AppAuthAgentsCreateRoute.addChildren({
         AppAuthAgentsCreateLayoutRoute:
           AppAuthAgentsCreateLayoutRoute.addChildren({
+            AppAuthAgentsCreateLayoutBehaviorRoute,
             AppAuthAgentsCreateLayoutKnowledgeSourcesRoute,
+            AppAuthAgentsCreateLayoutQuestionsRoute,
           }),
       }),
     }),
@@ -407,7 +437,9 @@ export const routeTree = rootRoute.addChildren({
       "filePath": "_app/_auth/agents/create/_layout.tsx",
       "parent": "/_app/_auth/agents/create",
       "children": [
-        "/_app/_auth/agents/create/_layout/knowledge-sources"
+        "/_app/_auth/agents/create/_layout/behavior",
+        "/_app/_auth/agents/create/_layout/knowledge-sources",
+        "/_app/_auth/agents/create/_layout/questions"
       ]
     },
     "/_app/_auth/dashboard/_layout/checkout": {
@@ -430,8 +462,16 @@ export const routeTree = rootRoute.addChildren({
       "filePath": "_app/_auth/dashboard/_layout.index.tsx",
       "parent": "/_app/_auth/dashboard/_layout"
     },
+    "/_app/_auth/agents/create/_layout/behavior": {
+      "filePath": "_app/_auth/agents/create/_layout.behavior.tsx",
+      "parent": "/_app/_auth/agents/create/_layout"
+    },
     "/_app/_auth/agents/create/_layout/knowledge-sources": {
       "filePath": "_app/_auth/agents/create/_layout.knowledge-sources.tsx",
+      "parent": "/_app/_auth/agents/create/_layout"
+    },
+    "/_app/_auth/agents/create/_layout/questions": {
+      "filePath": "_app/_auth/agents/create/_layout.questions.tsx",
       "parent": "/_app/_auth/agents/create/_layout"
     },
     "/_app/_auth/dashboard/_layout/settings/billing": {

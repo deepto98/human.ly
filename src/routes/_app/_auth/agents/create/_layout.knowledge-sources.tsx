@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useConvexMutation, useConvexAction } from "@convex-dev/react-query";
 import { api } from "@cvx/_generated/api";
@@ -48,11 +48,13 @@ function KnowledgeSourcesPage() {
   const addWebSearchSources = useConvexAction(api.knowledgeSources.addWebSearchSources);
 
   // Initialize agent on mount
-  useState(() => {
-    createAgent.mutate({}, {
-      onSuccess: (id) => setAgentId(id as string),
-    });
-  });
+  useEffect(() => {
+    if (!agentId) {
+      createAgent.mutate({}, {
+        onSuccess: (id) => setAgentId(id as string),
+      });
+    }
+  }, []);
 
   const handleTopicSubmit = async () => {
     if (!agentId || !topic.trim()) return;
