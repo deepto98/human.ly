@@ -29,7 +29,7 @@ export default function Dashboard() {
 
   const handleDeleteAgent = async (agentId: string) => {
     if (confirm("Are you sure you want to delete this agent?")) {
-      await deleteAgent.mutateAsync({ agentId: agentId as any });
+      await deleteAgent({ agentId: agentId as any });
     }
   };
 

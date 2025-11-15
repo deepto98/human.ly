@@ -53,7 +53,7 @@ function QuestionsPage() {
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
-      await generateQuestions.mutateAsync({
+      await generateQuestions({
         agentId: agentId as any,
         mcqCount,
         subjectiveCount,
@@ -74,7 +74,7 @@ function QuestionsPage() {
 
   const handleDeleteQuestion = async (questionId: string) => {
     if (confirm("Delete this question?")) {
-      await deleteQuestion.mutateAsync({ questionId: questionId as any });
+      await deleteQuestion({ questionId: questionId as any });
       await refetch();
     }
   };

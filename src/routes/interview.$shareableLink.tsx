@@ -117,7 +117,7 @@ function InterviewPage() {
       return;
     }
 
-    const result = await startInterview.mutateAsync({
+    const result = await startInterview({
       agentId: agentData?._id as any,
       candidateName,
       candidateEmail,
@@ -178,7 +178,7 @@ function InterviewPage() {
     setMessages(prev => [...prev, { sender: "candidate", text: answerText }]);
 
     // Evaluate answer
-    const result = await submitAnswer.mutateAsync({
+    const result = await submitAnswer({
       interviewId: interviewId as any,
       questionId: currentQuestion._id as any,
       candidateAnswer: answer,
@@ -213,7 +213,7 @@ function InterviewPage() {
     speak(closingText);
 
     if (interviewId) {
-      await completeInterview.mutateAsync({
+      await completeInterview({
         interviewId: interviewId as any,
       });
     }

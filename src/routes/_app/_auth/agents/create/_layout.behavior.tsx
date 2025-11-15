@@ -40,7 +40,7 @@ function BehaviorPage() {
     setIsPublishing(true);
     try {
       // Update agent configuration
-      await updateAgent.mutateAsync({
+      await updateAgent({
         agentId: agentId as any,
         name,
         gender: gender as any,
@@ -52,7 +52,7 @@ function BehaviorPage() {
       });
       
       // Publish the agent
-      const result = await publishAgent.mutateAsync({
+      const result = await publishAgent({
         agentId: agentId as any,
       });
       
