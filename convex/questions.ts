@@ -49,7 +49,7 @@ export const generateQuestions = action({
     let subjectiveQuestions: any[] = [];
 
     // If only topic-based sources, use topic generation
-    const isTopicOnly = sources.every((s) => s.type === "topic");
+    const isTopicOnly = sources.every((s: any) => s.type === "topic");
 
     if (isTopicOnly && sources.length === 1) {
       const topic = sources[0].content;

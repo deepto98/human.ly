@@ -4,8 +4,6 @@
 
 import { v } from "convex/values";
 import { action, mutation, query } from "./_generated/server";
-import { auth } from "./auth";
-import { interviewStatusValidator } from "./schema";
 import { api } from "./_generated/api";
 import { evaluateSubjectiveAnswer, generateFollowUpQuestion } from "./lib/openai";
 
@@ -66,7 +64,11 @@ export const submitAnswer = action({
     questionId: v.id("questions"),
     candidateAnswer: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{
+    score: number;
+    evaluationFeedback: string;
+    isCorrect?: boolean;
+  }> => {
     const question = await ctx.runQuery(api.questions.getQuestion, {
       questionId: args.questionId,
     });
@@ -100,7 +102,7 @@ export const submitAnswer = action({
     }
 
     // Store response
-    const responseId = await ctx.runMutation(api.interviews.createResponse, {
+    await ctx.runMutation(api.interviews.createResponse, {
       interviewId: args.interviewId,
       questionId: args.questionId,
       candidateAnswer: args.candidateAnswer,
