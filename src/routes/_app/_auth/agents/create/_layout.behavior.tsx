@@ -12,34 +12,46 @@ import { z } from "zod";
 export const Route = createFileRoute("/_app/_auth/agents/create/_layout/behavior")({
   component: BehaviorPage,
   validateSearch: z.object({
-    agentId: z.string(),
+    sourceType: z.string().optional(),
+    sourceContent: z.string().optional(),
+    questions: z.string().optional(),
+    totalMarks: z.string().optional(),
+    agentId: z.string().optional(),
   }),
 });
 
 function BehaviorPage() {
-  const { agentId } = Route.useSearch();
+  const searchParams = Route.useSearch();
   const navigate = useNavigate();
   
-  const { data: agent } = useQuery(
-    convexQuery(api.agents.getAgent, { agentId: agentId as any })
-  );
-  
+  const createAgent = useConvexMutation(api.agents.createAgent);
+  const createQuestion = useConvexMutation(api.questions.createQuestion);
+  const addTopicSource = useConvexMutation(api.knowledgeSources.addTopicSource);
   const updateAgent = useConvexMutation(api.agents.updateAgent);
   const publishAgent = useConvexMutation(api.agents.publishAgent);
   
-  const [name, setName] = useState(agent?.name || "");
-  const [gender, setGender] = useState(agent?.gender || "female");
-  const [appearance, setAppearance] = useState(agent?.appearance || "default_avatar");
-  const [voiceType, setVoiceType] = useState(agent?.voiceType || "default");
-  const [conversationalStyle, setConversationalStyle] = useState(agent?.conversationalStyle || "formal");
-  const [enableFollowUps, setEnableFollowUps] = useState(agent?.enableFollowUps ?? true);
-  const [maxFollowUps, setMaxFollowUps] = useState(agent?.maxFollowUps || 2);
+  const [name, setName] = useState("Interview Agent");
+  const [gender, setGender] = useState("female");
+  const [appearance, setAppearance] = useState("default_avatar");
+  const [voiceType, setVoiceType] = useState("default");
+  const [conversationalStyle, setConversationalStyle] = useState("formal");
+  const [enableFollowUps, setEnableFollowUps] = useState(true);
+  const [maxFollowUps, setMaxFollowUps] = useState(2);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
 
-  const handlePublish = async () => {
-    setIsPublishing(true);
+  const saveAgent = async (publish: boolean = false) => {
+    if (!name.trim()) {
+      alert("Please enter an agent name");
+      return;
+    }
+
     try {
-      // Update agent configuration
+      // Step 1: Create the agent
+      const agentId = await createAgent({});
+
+      // Step 2: Update agent configuration
+      const totalMarks = parseInt(searchParams.totalMarks || "0");
       await updateAgent({
         agentId: agentId as any,
         name,
@@ -49,20 +61,63 @@ function BehaviorPage() {
         conversationalStyle: conversationalStyle as any,
         enableFollowUps,
         maxFollowUps,
+        totalMarks,
       });
-      
-      // Publish the agent
-      const result = await publishAgent({
-        agentId: agentId as any,
-      });
-      
-      alert(`Agent published! Share this link: ${window.location.origin}/interview/${result.shareableLink}`);
+
+      // Step 3: Add knowledge source
+      if (searchParams.sourceType === "topic" && searchParams.sourceContent) {
+        await addTopicSource({
+          agentId: agentId as any,
+          topic: searchParams.sourceContent,
+        });
+      }
+      // For URL and web_search, we'd need to implement scraping here
+      // For now, only topic is fully supported in this flow
+
+      // Step 4: Create questions
+      if (searchParams.questions) {
+        const questions = JSON.parse(searchParams.questions);
+        for (const question of questions) {
+          await createQuestion({
+            agentId: agentId as any,
+            type: question.type,
+            questionText: question.questionText,
+            order: question.order,
+            marks: question.marks,
+            options: question.options,
+            correctOption: question.correctOption,
+            keyPoints: question.keyPoints,
+          });
+        }
+      }
+
+      // Step 5: Publish if requested
+      if (publish) {
+        const result = await publishAgent({
+          agentId: agentId as any,
+        });
+        alert(`Agent published! Share this link: ${window.location.origin}/interview/${result.shareableLink}`);
+      } else {
+        alert("Agent saved as draft!");
+      }
+
       navigate({ to: "/dashboard" });
     } catch (error) {
       console.error(error);
-      alert("Failed to publish agent. Make sure all fields are filled.");
+      alert("Failed to save agent. Please try again.");
     }
+  };
+
+  const handlePublish = async () => {
+    setIsPublishing(true);
+    await saveAgent(true);
     setIsPublishing(false);
+  };
+
+  const handleSaveDraft = async () => {
+    setIsSavingDraft(true);
+    await saveAgent(false);
+    setIsSavingDraft(false);
   };
 
   return (
