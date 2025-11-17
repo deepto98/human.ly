@@ -272,38 +272,59 @@ function BehaviorPage() {
                 </div>
               </div>
 
-              {/* Publish Button */}
-              <button
-                onClick={handlePublish}
-                disabled={isPublishing || !name.trim()}
-                className="relative w-full group"
-              >
-                <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
-                <div className={cn(
-                  "relative flex items-center justify-center gap-2 border-[4px] border-black px-8 py-5 font-bold uppercase text-xl transition-all hover:translate-x-[2px] hover:translate-y-[2px]",
-                  isPublishing || !name.trim() ? "bg-gray-300" : "bg-orange-400"
-                )}>
-                  {isPublishing ? (
-                    <>
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                      Publishing Agent...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-6 w-6" />
-                      Publish Agent
-                    </>
-                  )}
-                </div>
-              </button>
-
-              {/* Preview Option */}
-              <div className="text-center">
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Save Draft Button */}
                 <button
-                  className="text-sm font-bold underline hover:text-gray-600"
+                  onClick={handleSaveDraft}
+                  disabled={isSavingDraft || !name.trim()}
+                  className="relative group"
                 >
-                  Preview Agent (Coming Soon)
+                  <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+                  <div className={cn(
+                    "relative flex items-center justify-center gap-2 border-[4px] border-black px-6 py-4 font-bold uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px]",
+                    isSavingDraft || !name.trim() ? "bg-gray-300" : "bg-cyan-300"
+                  )}>
+                    {isSavingDraft ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Draft"
+                    )}
+                  </div>
                 </button>
+
+                {/* Publish Button */}
+                <button
+                  onClick={handlePublish}
+                  disabled={isPublishing || !name.trim()}
+                  className="relative group"
+                >
+                  <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+                  <div className={cn(
+                    "relative flex items-center justify-center gap-2 border-[4px] border-black px-6 py-4 font-bold uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px]",
+                    isPublishing || !name.trim() ? "bg-gray-300" : "bg-orange-400"
+                  )}>
+                    {isPublishing ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Publishing...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-5 w-5" />
+                        Publish
+                      </>
+                    )}
+                  </div>
+                </button>
+              </div>
+
+              {/* Info Note */}
+              <div className="text-center text-sm text-gray-600">
+                <p>Save as draft to continue later, or publish to get a shareable link</p>
               </div>
             </div>
           </div>
