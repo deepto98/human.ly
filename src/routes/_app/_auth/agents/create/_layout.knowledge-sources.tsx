@@ -126,6 +126,10 @@ function KnowledgeSourcesPage() {
   };
 
   const [isSearching, setIsSearching] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [scrapedContents, setScrapedContents] = useState<string[]>([]);
+
+  const uploadAndScrape = useConvexAction(api.storage.uploadAndScrapeDocument);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
@@ -134,18 +138,44 @@ function KnowledgeSourcesPage() {
     setUploadedFiles(files);
   };
 
-  const handleDocumentSubmit = () => {
+  const handleDocumentSubmit = async () => {
     if (uploadedFiles.length === 0) return;
 
-    // Store file names for now, actual upload happens when agent is saved
-    const fileNames = uploadedFiles.map(f => f.name);
-    navigate({ 
-      to: "/agents/create/questions", 
-      search: { 
-        sourceType: "document",
-        sourceContent: JSON.stringify(fileNames)
-      } 
-    });
+    setIsUploading(true);
+    const scrapedDocs: string[] = [];
+
+    try {
+      for (const file of uploadedFiles) {
+        // Read file as ArrayBuffer
+        const arrayBuffer = await file.arrayBuffer();
+        
+        // Upload to R2 and scrape content
+        const result = await uploadAndScrape({
+          filename: file.name,
+          fileData: arrayBuffer,
+          contentType: file.type || "application/pdf",
+        });
+
+        // Store the scraped content
+        scrapedDocs.push(result.scrapedContent);
+      }
+
+      // Combine all scraped content
+      const combinedContent = scrapedDocs.join("\n\n---\n\n");
+
+      // Navigate with scraped content
+      navigate({ 
+        to: "/agents/create/questions", 
+        search: { 
+          sourceType: "document",
+          sourceContent: combinedContent
+        } 
+      });
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert("Failed to upload documents. Please check your R2 and Firecrawl configuration.");
+      setIsUploading(false);
+    }
   };
 
 
@@ -478,14 +508,44 @@ function KnowledgeSourcesPage() {
 
                   <button
                     onClick={handleDocumentSubmit}
+                    disabled={isUploading}
                     className="relative w-full group"
                   >
                     <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
                     <div className="relative flex items-center justify-center gap-2 border-[4px] border-black bg-orange-400 px-8 py-4 font-bold uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px]">
-                      Continue with {uploadedFiles.length} File{uploadedFiles.length > 1 ? 's' : ''}
-                      <ArrowRight className="h-5 w-5" />
+                      {isUploading ? (
+                        <>
+                          <Loader2 className="h-6 w-6 animate-spin" />
+                          Uploading & Processing...
+                        </>
+                      ) : (
+                        <>
+                          Upload & Continue
+                          <ArrowRight className="h-5 w-5" />
+                        </>
+                      )}
                     </div>
                   </button>
+                </>
+              )}
+
+              {isUploading && (
+                <div className="text-center py-6">
+                  <Loader2 className="h-12 w-12 animate-spin mx-auto mb-3" />
+                  <p className="font-bold text-lg">Uploading to R2...</p>
+                  <p className="text-sm text-gray-600">Extracting content with Firecrawl</p>
+                  <p className="text-xs text-gray-500 mt-2">This may take 30-60 seconds</p>
+                </div>
+              )}
+
+              {!isUploading && uploadedFiles.length === 0 && (
+                <p className="text-sm text-gray-600 text-center mt-4">
+                  Select documents above to continue
+                </p>
+              )}
+
+              {!isUploading && uploadedFiles.length > 0 && (
+                <>
                 </>
               )}
 

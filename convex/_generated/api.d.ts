@@ -30,6 +30,7 @@ import type * as lib_r2 from "../lib/r2.js";
 import type * as otp_ResendOTP from "../otp/ResendOTP.js";
 import type * as otp_VerificationCodeEmail from "../otp/VerificationCodeEmail.js";
 import type * as questions from "../questions.js";
+import type * as storage from "../storage.js";
 import type * as stripe from "../stripe.js";
 
 /**
@@ -57,6 +58,7 @@ declare const fullApi: ApiFromModules<{
   "otp/ResendOTP": typeof otp_ResendOTP;
   "otp/VerificationCodeEmail": typeof otp_VerificationCodeEmail;
   questions: typeof questions;
+  storage: typeof storage;
   stripe: typeof stripe;
 }>;
 export declare const api: FilterApi<
