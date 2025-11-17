@@ -41,6 +41,8 @@ function KnowledgeSourcesPage() {
 
   // Actions - no agent creation yet
   const searchWeb = useConvexAction(api.knowledgeSources.searchWebForSources);
+  const scrapeUrlAction = useConvexAction(api.knowledgeSources.scrapeUrlForContent);
+  const scrapeMultipleUrls = useConvexAction(api.knowledgeSources.scrapeMultipleUrlsForContent);
 
   const handleTopicSubmit = async () => {
     if (!topic.trim()) return;
@@ -66,17 +68,36 @@ function KnowledgeSourcesPage() {
     setUrls(urls.filter((u) => u !== url));
   };
 
+  const [isScrapingUrls, setIsScrapingUrls] = useState(false);
+
   const handleUrlsSubmit = async () => {
     if (urls.length === 0) return;
 
-    // Pass URLs via URL params (scraping will happen when agent is saved)
-    navigate({ 
-      to: "/agents/create/questions", 
-      search: { 
-        sourceType: "url",
-        sourceContent: JSON.stringify(urls)
-      } 
-    });
+    setIsScrapingUrls(true);
+    try {
+      console.log("Scraping URLs:", urls);
+      
+      // Scrape all URLs now
+      const result = await scrapeMultipleUrls({
+        urls,
+      });
+
+      console.log("Scraped content length:", result.combinedContent.length);
+
+      // Navigate with scraped content
+      navigate({ 
+        to: "/agents/create/questions", 
+        search: { 
+          sourceType: "url",
+          sourceContent: result.combinedContent,
+          urlCount: urls.length.toString()
+        } 
+      });
+    } catch (error) {
+      console.error("Failed to scrape URLs:", error);
+      alert("Failed to scrape URLs. Please check your Firecrawl API key.");
+      setIsScrapingUrls(false);
+    }
   };
 
   const handleSearch = async () => {
@@ -112,17 +133,37 @@ function KnowledgeSourcesPage() {
     setSelectedUrls(newSelected);
   };
 
+  const [isScrapingSearchResults, setIsScrapingSearchResults] = useState(false);
+
   const handleSearchSubmit = async () => {
     if (selectedUrls.size === 0) return;
 
-    // Pass selected URLs via URL params
-    navigate({ 
-      to: "/agents/create/questions", 
-      search: { 
-        sourceType: "web_search",
-        sourceContent: JSON.stringify(Array.from(selectedUrls))
-      } 
-    });
+    setIsScrapingSearchResults(true);
+    try {
+      const urlsArray = Array.from(selectedUrls);
+      console.log("Scraping search results:", urlsArray);
+      
+      // Scrape selected URLs now
+      const result = await scrapeMultipleUrls({
+        urls: urlsArray,
+      });
+
+      console.log("Scraped search content length:", result.combinedContent.length);
+
+      // Navigate with scraped content
+      navigate({ 
+        to: "/agents/create/questions", 
+        search: { 
+          sourceType: "web_search",
+          sourceContent: result.combinedContent,
+          urlCount: urlsArray.length.toString()
+        } 
+      });
+    } catch (error) {
+      console.error("Failed to scrape search results:", error);
+      alert("Failed to scrape selected URLs. Please check your Firecrawl API key.");
+      setIsScrapingSearchResults(false);
+    }
   };
 
   const [isSearching, setIsSearching] = useState(false);
@@ -342,13 +383,22 @@ function KnowledgeSourcesPage() {
 
               <button
                 onClick={handleUrlsSubmit}
-                disabled={urls.length === 0}
+                disabled={urls.length === 0 || isScrapingUrls}
                 className="relative w-full group"
               >
                 <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
                 <div className="relative flex items-center justify-center gap-2 border-[4px] border-black bg-orange-400 px-8 py-4 font-bold uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px]">
-                  Continue
-                  <ArrowRight className="h-5 w-5" />
+                  {isScrapingUrls ? (
+                    <>
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                      Scraping {urls.length} URL{urls.length > 1 ? 's' : ''}...
+                    </>
+                  ) : (
+                    <>
+                      Scrape & Continue
+                      <ArrowRight className="h-5 w-5" />
+                    </>
+                  )}
                 </div>
               </button>
             </div>
@@ -445,13 +495,22 @@ function KnowledgeSourcesPage() {
 
                   <button
                     onClick={handleSearchSubmit}
-                    disabled={selectedUrls.size === 0}
+                    disabled={selectedUrls.size === 0 || isScrapingSearchResults}
                     className="relative w-full group"
                   >
                     <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
                     <div className="relative flex items-center justify-center gap-2 border-[4px] border-black bg-orange-400 px-8 py-4 font-bold uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px]">
-                      Continue with {selectedUrls.size} Selected
-                      <ArrowRight className="h-6 w-6" />
+                      {isScrapingSearchResults ? (
+                        <>
+                          <Loader2 className="h-6 w-6 animate-spin" />
+                          Scraping {selectedUrls.size} Page{selectedUrls.size > 1 ? 's' : ''}...
+                        </>
+                      ) : (
+                        <>
+                          Scrape {selectedUrls.size} Selected
+                          <ArrowRight className="h-6 w-6" />
+                        </>
+                      )}
                     </div>
                   </button>
                 </>
