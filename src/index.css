@@ -63,6 +63,12 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Ensure text is visible in inputs and text areas */
+  input,
+  textarea,
+  select {
+    @apply text-black;
+  }
 }
 
 body {
