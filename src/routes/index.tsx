@@ -126,88 +126,8 @@ function Index() {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* How It Works - Moved before Why Humanly */}
       <section className="py-20 px-4 bg-white border-y-[4px] border-black">
-        <div className="mx-auto max-w-7xl">
-          <h2 className="mb-16 text-center text-5xl font-black text-black md:text-6xl">
-            Why Humanly?
-          </h2>
-
-          <div className="grid gap-8 md:grid-cols-3">
-            {/* Feature 1 */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              viewport={{ once: true }}
-              className="relative"
-            >
-              <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
-              <div className="relative border-[4px] border-black bg-cyan-200 p-8 h-full">
-                <div className="mb-4 inline-block rounded-full border-[3px] border-black bg-white p-3">
-                  <Brain className="h-8 w-8" />
-                </div>
-                <h3 className="mb-3 text-2xl font-bold text-black">
-                  AI-Powered Agents
-                </h3>
-                <p className="text-gray-800 font-medium">
-                  Design intelligent interview agents with custom knowledge sources,
-                  personalities, and evaluation criteria.
-                </p>
-              </div>
-            </motion.div>
-
-            {/* Feature 2 */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              viewport={{ once: true }}
-              className="relative"
-            >
-              <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
-              <div className="relative border-[4px] border-black bg-lime-200 p-8 h-full">
-                <div className="mb-4 inline-block rounded-full border-[3px] border-black bg-white p-3">
-                  <Users className="h-8 w-8" />
-                </div>
-                <h3 className="mb-3 text-2xl font-bold text-black">
-                  Interactive Interviews
-                </h3>
-                <p className="text-gray-800 font-medium">
-                  Candidates engage with human-like avatars that speak, listen,
-                  and adapt based on their responses.
-                </p>
-              </div>
-            </motion.div>
-
-            {/* Feature 3 */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              viewport={{ once: true }}
-              className="relative"
-            >
-              <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
-              <div className="relative border-[4px] border-black bg-pink-200 p-8 h-full">
-                <div className="mb-4 inline-block rounded-full border-[3px] border-black bg-white p-3">
-                  <Sparkles className="h-8 w-8" />
-                </div>
-                <h3 className="mb-3 text-2xl font-bold text-black">
-                  Smart Evaluation
-                </h3>
-                <p className="text-gray-800 font-medium">
-                  Multi-agent AI system evaluates responses, asks follow-ups,
-                  and provides detailed scoring insights.
-                </p>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-20 px-4 bg-amber-50">
         <div className="mx-auto max-w-7xl">
           <h2 className="mb-16 text-center text-5xl font-black text-black md:text-6xl">
             How It Works
@@ -289,6 +209,86 @@ function Index() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Humanly - Moved after How It Works */}
+      <section className="py-20 px-4 bg-amber-50">
+        <div className="mx-auto max-w-7xl">
+          <h2 className="mb-16 text-center text-5xl font-black text-black md:text-6xl">
+            Why Humanly?
+          </h2>
+
+          <div className="grid gap-8 md:grid-cols-3">
+            {/* Feature 1 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              viewport={{ once: true }}
+              className="relative"
+            >
+              <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+              <div className="relative border-[4px] border-black bg-cyan-200 p-8 h-full">
+                <div className="mb-4 inline-block rounded-full border-[3px] border-black bg-white p-3">
+                  <Brain className="h-8 w-8" />
+                </div>
+                <h3 className="mb-3 text-2xl font-bold text-black">
+                  AI-Powered Agents
+                </h3>
+                <p className="text-gray-800 font-medium">
+                  Design intelligent interview agents with custom knowledge sources,
+                  personalities, and evaluation criteria.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Feature 2 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              viewport={{ once: true }}
+              className="relative"
+            >
+              <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+              <div className="relative border-[4px] border-black bg-lime-200 p-8 h-full">
+                <div className="mb-4 inline-block rounded-full border-[3px] border-black bg-white p-3">
+                  <Users className="h-8 w-8" />
+                </div>
+                <h3 className="mb-3 text-2xl font-bold text-black">
+                  Interactive Interviews
+                </h3>
+                <p className="text-gray-800 font-medium">
+                  Candidates engage with human-like avatars that speak, listen,
+                  and adapt based on their responses.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Feature 3 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              viewport={{ once: true }}
+              className="relative"
+            >
+              <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+              <div className="relative border-[4px] border-black bg-pink-200 p-8 h-full">
+                <div className="mb-4 inline-block rounded-full border-[3px] border-black bg-white p-3">
+                  <Sparkles className="h-8 w-8" />
+                </div>
+                <h3 className="mb-3 text-2xl font-bold text-black">
+                  Smart Evaluation
+                </h3>
+                <p className="text-gray-800 font-medium">
+                  Multi-agent AI system evaluates responses, asks follow-ups,
+                  and provides detailed scoring insights.
+                </p>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
