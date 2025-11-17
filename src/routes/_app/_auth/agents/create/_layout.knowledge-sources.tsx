@@ -24,6 +24,7 @@ function KnowledgeSourcesPage() {
   const navigate = useNavigate();
   const [selectedType, setSelectedType] = useState<SourceType | null>(null);
   const [agentId, setAgentId] = useState<string | null>(null);
+  const [isCreatingAgent, setIsCreatingAgent] = useState(false);
 
   // Topic state
   const [topic, setTopic] = useState("");
@@ -50,17 +51,22 @@ function KnowledgeSourcesPage() {
   // Initialize agent on mount
   useEffect(() => {
     const initAgent = async () => {
-      if (!agentId) {
+      if (!agentId && !isCreatingAgent) {
+        setIsCreatingAgent(true);
         try {
           const id = await createAgent({});
           setAgentId(id as string);
+          console.log("Agent created:", id);
         } catch (error) {
           console.error("Failed to create agent:", error);
+          alert("Failed to create agent. Please make sure you're logged in.");
+          navigate({ to: "/dashboard" });
         }
+        setIsCreatingAgent(false);
       }
     };
     initAgent();
-  }, [agentId]);
+  }, []);
 
   const handleTopicSubmit = async () => {
     if (!agentId || !topic.trim()) return;
@@ -185,10 +191,13 @@ function KnowledgeSourcesPage() {
     }
   };
 
-  if (!agentId) {
+  if (!agentId || isCreatingAgent) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex min-h-screen items-center justify-center bg-amber-50">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
+          <p className="text-lg font-bold">Creating your agent...</p>
+        </div>
       </div>
     );
   }
