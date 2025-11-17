@@ -324,8 +324,12 @@ function Index() {
       <footer className="border-t-[4px] border-black bg-amber-50 py-12 px-4">
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <Logo showText={true} />
-            <p className="text-sm font-medium text-gray-700">
+            <div className="relative">
+              <Logo showText={true} />
+              {/* Underline */}
+              <div className="absolute left-0 top-full h-[2px] w-24 bg-orange-400 mt-1"></div>
+            </div>
+            <p className="text-sm font-medium text-black">
               © 2024 {siteConfig.siteTitle}. Reinventing interviews with AI.
             </p>
           </div>
