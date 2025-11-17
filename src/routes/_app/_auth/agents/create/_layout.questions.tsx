@@ -8,6 +8,8 @@ import { Input } from "@/ui/input";
 import { Loader2, Plus, X, Edit2, Trash2, GripVertical, ArrowRight } from "lucide-react";
 import { cn } from "@/utils/misc";
 import { z } from "zod";
+import { AppLayout } from "@/ui/app-layout";
+import { StepIndicator } from "@/ui/step-indicator";
 
 export const Route = createFileRoute("/_app/_auth/agents/create/_layout/questions")({
   component: QuestionsPage,
@@ -123,15 +125,26 @@ function QuestionsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-amber-50 p-6">
-      <div className="mx-auto max-w-6xl">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="mb-2 text-5xl font-black text-black">Build Questionnaire</h1>
-          <p className="text-lg text-gray-700 font-medium">
-            Generate and customize interview questions
-          </p>
-        </div>
+    <AppLayout>
+      <div className="min-h-screen p-6">
+        <div className="mx-auto max-w-6xl">
+          {/* Step Indicator */}
+          <StepIndicator 
+            currentStep={2}
+            steps={[
+              { number: 1, label: "Knowledge" },
+              { number: 2, label: "Questions" },
+              { number: 3, label: "Behavior" }
+            ]}
+          />
+
+          {/* Header */}
+          <div className="mb-8 text-center">
+            <h1 className="mb-2 text-5xl font-black text-black">Build Questionnaire</h1>
+            <p className="text-lg text-gray-700 font-medium">
+              Generate and customize interview questions
+            </p>
+          </div>
 
         {/* Configuration Section */}
         {(!generatedQuestions || generatedQuestions.length === 0) && (
@@ -356,8 +369,9 @@ function QuestionsPage() {
             </div>
           </>
         )}
+        </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }
 

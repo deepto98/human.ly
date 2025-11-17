@@ -5,9 +5,11 @@ import { useConvexMutation, convexQuery } from "@convex-dev/react-query";
 import { api } from "@cvx/_generated/api";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
-import { Loader2, ArrowRight, CheckCircle } from "lucide-react";
+import { Loader2, ArrowRight, CheckCircle, Save } from "lucide-react";
 import { cn } from "@/utils/misc";
 import { z } from "zod";
+import { AppLayout } from "@/ui/app-layout";
+import { StepIndicator } from "@/ui/step-indicator";
 
 export const Route = createFileRoute("/_app/_auth/agents/create/_layout/behavior")({
   component: BehaviorPage,
@@ -121,15 +123,26 @@ function BehaviorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-amber-50 p-6">
-      <div className="mx-auto max-w-4xl">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="mb-2 text-5xl font-black text-black">Configure Agent</h1>
-          <p className="text-lg text-gray-700 font-medium">
-            Customize your AI interviewer's personality and behavior
-          </p>
-        </div>
+    <AppLayout>
+      <div className="min-h-screen p-6">
+        <div className="mx-auto max-w-4xl">
+          {/* Step Indicator */}
+          <StepIndicator 
+            currentStep={3}
+            steps={[
+              { number: 1, label: "Knowledge" },
+              { number: 2, label: "Questions" },
+              { number: 3, label: "Behavior" }
+            ]}
+          />
+
+          {/* Header */}
+          <div className="mb-8 text-center">
+            <h1 className="mb-2 text-5xl font-black text-black">Configure Agent</h1>
+            <p className="text-lg text-gray-700 font-medium">
+              Customize your AI interviewer's personality and behavior
+            </p>
+          </div>
 
         <div className="relative">
           <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
@@ -329,8 +342,9 @@ function BehaviorPage() {
             </div>
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }
 
