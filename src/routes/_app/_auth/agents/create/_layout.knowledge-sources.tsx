@@ -314,7 +314,36 @@ function KnowledgeSourcesPage() {
                 </p>
               </div>
             </button>
-          </div>
+            </div>
+
+            {/* Manual Question Builder Option */}
+            <div className="mt-8 text-center">
+              <div className="relative mb-3 flex items-center">
+                <div className="flex-1 border-t-[3px] border-black"></div>
+                <span className="px-4 text-sm font-bold uppercase text-gray-600">Or</span>
+                <div className="flex-1 border-t-[3px] border-black"></div>
+              </div>
+
+              <button
+                onClick={() => navigate({ 
+                  to: "/agents/create/questions",
+                  search: { sourceType: "manual", sourceContent: "Manual Questions" }
+                })}
+                className="group relative inline-block"
+              >
+                <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+                <div className="relative border-[4px] border-black bg-gradient-to-r from-purple-300 to-pink-300 px-8 py-4 font-bold uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px]">
+                  <span className="flex items-center gap-2">
+                    <Plus className="h-5 w-5" />
+                    Make Questions Yourself
+                  </span>
+                </div>
+              </button>
+              <p className="mt-3 text-sm text-gray-600">
+                Skip AI generation and create questions manually
+              </p>
+            </div>
+          </>
         )}
 
         {/* Topic Input */}
