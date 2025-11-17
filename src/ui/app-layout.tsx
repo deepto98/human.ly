@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { Logo } from "@/ui/logo";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { LogOut, Menu, X, LayoutDashboard, Settings, CreditCard } from "lucide-react";
@@ -20,12 +20,30 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('sidebarOpen');
-      return saved === null ? true : saved === 'true';
+      // Default to collapsed on mobile, expanded on desktop
+      const isMobile = window.innerWidth < 1024;
+      return saved === null ? !isMobile : saved === 'true';
     }
     return true;
   });
   
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  // Auto-collapse on mobile
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = window.innerWidth < 1024;
+      if (isMobile && isSidebarOpen) {
+        const saved = localStorage.getItem('sidebarOpen');
+        if (saved === null) {
+          setIsSidebarOpen(false);
+        }
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isSidebarOpen]);
 
   // Save sidebar state to localStorage when it changes
   const toggleSidebar = () => {
@@ -126,7 +144,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div className="flex">
         {/* Sidebar - Neobrutalist Collapsible */}
         <aside className={cn(
-          "sticky top-[73px] h-[calc(100vh-73px)] border-r-[4px] border-black bg-white transition-all duration-300",
+          "sticky top-[73px] h-[calc(100vh-73px)] border-r-[4px] border-black bg-white transition-all duration-300 hidden lg:block",
           isSidebarOpen ? "w-64" : "w-20"
         )}>
           <div className="p-3">
