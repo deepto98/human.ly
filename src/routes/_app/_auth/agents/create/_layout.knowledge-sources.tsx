@@ -149,6 +149,8 @@ function KnowledgeSourcesPage() {
         // Read file as ArrayBuffer
         const arrayBuffer = await file.arrayBuffer();
         
+        console.log("Uploading file:", file.name);
+        
         // Upload to R2 and scrape content
         const result = await uploadAndScrape({
           filename: file.name,
@@ -156,19 +158,25 @@ function KnowledgeSourcesPage() {
           contentType: file.type || "application/pdf",
         });
 
+        console.log("File processed:", result.filename, "Content length:", result.scrapedContent.length);
+
         // Store the scraped content
         scrapedDocs.push(result.scrapedContent);
       }
 
       // Combine all scraped content
-      const combinedContent = scrapedDocs.join("\n\n---\n\n");
+      const combinedContent = scrapedDocs.join("\n\n--- Document Separator ---\n\n");
+
+      console.log("Total documents processed:", scrapedDocs.length);
+      console.log("Combined content length:", combinedContent.length);
 
       // Navigate with scraped content
       navigate({ 
         to: "/agents/create/questions", 
         search: { 
           sourceType: "document",
-          sourceContent: combinedContent
+          sourceContent: combinedContent,
+          documentCount: uploadedFiles.length.toString()
         } 
       });
     } catch (error) {
