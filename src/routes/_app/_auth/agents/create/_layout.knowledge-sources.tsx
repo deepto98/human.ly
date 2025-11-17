@@ -294,22 +294,13 @@ function KnowledgeSourcesPage() {
 
               <button
                 onClick={handleUrlsSubmit}
-                disabled={urls.length === 0 || isScrapingUrls}
+                disabled={urls.length === 0}
                 className="relative w-full group"
               >
                 <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
                 <div className="relative flex items-center justify-center gap-2 border-[4px] border-black bg-orange-400 px-8 py-4 font-bold uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px]">
-                  {isScrapingUrls ? (
-                    <>
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      Scraping...
-                    </>
-                  ) : (
-                    <>
-                      Scrape & Continue
-                      <ArrowRight className="h-5 w-5" />
-                    </>
-                  )}
+                  Continue
+                  <ArrowRight className="h-5 w-5" />
                 </div>
               </button>
             </div>
@@ -406,22 +397,13 @@ function KnowledgeSourcesPage() {
 
                   <button
                     onClick={handleSearchSubmit}
-                    disabled={selectedUrls.size === 0 || isScrapingUrls}
+                    disabled={selectedUrls.size === 0}
                     className="relative w-full group"
                   >
                     <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
                     <div className="relative flex items-center justify-center gap-2 border-[4px] border-black bg-orange-400 px-8 py-4 font-bold uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px]">
-                      {isScrapingUrls ? (
-                        <>
-                          <Loader2 className="h-6 w-6 animate-spin" />
-                          Scraping {selectedUrls.size} URLs...
-                        </>
-                      ) : (
-                        <>
-                          Scrape {selectedUrls.size} Selected
-                          <ArrowRight className="h-6 w-6" />
-                        </>
-                      )}
+                      Continue with {selectedUrls.size} Selected
+                      <ArrowRight className="h-6 w-6" />
                     </div>
                   </button>
                 </>
@@ -452,7 +434,6 @@ function KnowledgeSourcesPage() {
                   onChange={handleFileUpload}
                   className="hidden"
                   id="file-upload"
-                  disabled={isUploading}
                 />
                 <label
                   htmlFor="file-upload"
@@ -461,12 +442,8 @@ function KnowledgeSourcesPage() {
                   <div className="relative inline-block">
                     <div className="absolute -bottom-1 -right-1 h-full w-full bg-black"></div>
                     <div className="relative border-[3px] border-black bg-orange-300 px-6 py-3 font-bold uppercase hover:bg-orange-400 transition-colors">
-                      {isUploading ? (
-                        <Loader2 className="h-5 w-5 animate-spin inline mr-2" />
-                      ) : (
-                        <Upload className="h-5 w-5 inline mr-2" />
-                      )}
-                      {isUploading ? "Uploading..." : "Choose Files"}
+                      <Upload className="h-5 w-5 inline mr-2" />
+                      Choose Files
                     </div>
                   </div>
                 </label>
@@ -475,7 +452,7 @@ function KnowledgeSourcesPage() {
                 </p>
               </div>
 
-              {uploadedFiles.length > 0 && !isUploading && (
+              {uploadedFiles.length > 0 && (
                 <div className="space-y-2 mb-4">
                   <p className="font-bold text-sm uppercase">Selected Files:</p>
                   {uploadedFiles.map((file, idx) => (
@@ -489,13 +466,6 @@ function KnowledgeSourcesPage() {
                 </div>
               )}
 
-              {isUploading && (
-                <div className="text-center py-4">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-                  <p className="font-bold">Uploading and processing documents...</p>
-                  <p className="text-sm text-gray-600">This may take a moment</p>
-                </div>
-              )}
 
               <p className="text-xs text-gray-500 mt-4">
                 Note: Documents will be uploaded to Cloudflare R2 and scraped with Firecrawl.
