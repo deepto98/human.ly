@@ -100,12 +100,17 @@ function KnowledgeSourcesPage() {
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
 
-    const results = await searchWeb({
-      query: searchQuery.trim(),
-      maxResults: 10,
-    });
+    try {
+      const results = await searchWeb({
+        query: searchQuery.trim(),
+        maxResults: 10,
+      });
 
-    setSearchResults(results as SearchResult[]);
+      setSearchResults(results as SearchResult[]);
+    } catch (error) {
+      console.error("Search failed:", error);
+      alert("Failed to search. Please check your Firecrawl API key.");
+    }
   };
 
   const toggleUrlSelection = (url: string) => {
@@ -121,17 +126,49 @@ function KnowledgeSourcesPage() {
   const handleSearchSubmit = async () => {
     if (!agentId || selectedUrls.size === 0) return;
 
-    await addWebSearchSources({
-      agentId: agentId as any,
-      urls: Array.from(selectedUrls),
-    });
+    try {
+      await addWebSearchSources({
+        agentId: agentId as any,
+        urls: Array.from(selectedUrls),
+      });
 
-    navigate({ to: "/agents/create/questions", search: { agentId: agentId } });
+      navigate({ to: "/agents/create/questions", search: { agentId: agentId } });
+    } catch (error) {
+      console.error("Failed to scrape sources:", error);
+      alert("Failed to scrape selected websites. Please try again.");
+    }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setUploadedFiles(Array.from(e.target.files));
+  const uploadDocumentSource = useConvexAction(api.knowledgeSources.uploadDocumentSource);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !agentId) return;
+    
+    const files = Array.from(e.target.files);
+    setUploadedFiles(files);
+    setIsUploading(true);
+
+    try {
+      for (const file of files) {
+        // Read file as ArrayBuffer
+        const arrayBuffer = await file.arrayBuffer();
+        
+        // Upload and create knowledge source
+        await uploadDocumentSource({
+          agentId: agentId as any,
+          filename: file.name,
+          fileData: arrayBuffer,
+          contentType: file.type || "application/pdf",
+        });
+      }
+
+      // Navigate to next step
+      navigate({ to: "/agents/create/questions", search: { agentId: agentId } });
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert("Failed to upload documents. Please check your R2 configuration.");
+      setIsUploading(false);
     }
   };
 
@@ -382,7 +419,7 @@ function KnowledgeSourcesPage() {
           </div>
         )}
 
-        {/* Document Upload - Placeholder for now */}
+        {/* Document Upload */}
         {selectedType === "document" && (
           <div className="relative">
             <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
@@ -394,21 +431,64 @@ function KnowledgeSourcesPage() {
                 ← Back
               </button>
               <h2 className="mb-4 text-3xl font-black">Upload Documents</h2>
-              <div className="mb-4 border-[3px] border-dashed border-black p-12 text-center">
-                <Upload className="h-16 w-16 mx-auto mb-4" />
+              
+              <div className="mb-4 border-[3px] border-dashed border-black p-12 text-center bg-orange-50">
+                <Upload className="h-16 w-16 mx-auto mb-4 text-gray-600" />
                 <input
                   type="file"
                   accept=".pdf,.doc,.docx"
                   multiple
                   onChange={handleFileUpload}
-                  className="mb-2"
+                  className="hidden"
+                  id="file-upload"
+                  disabled={isUploading}
                 />
-                <p className="text-sm text-gray-600">
-                  Upload PDF or DOCX files
+                <label
+                  htmlFor="file-upload"
+                  className="cursor-pointer inline-block"
+                >
+                  <div className="relative inline-block">
+                    <div className="absolute -bottom-1 -right-1 h-full w-full bg-black"></div>
+                    <div className="relative border-[3px] border-black bg-orange-300 px-6 py-3 font-bold uppercase hover:bg-orange-400 transition-colors">
+                      {isUploading ? (
+                        <Loader2 className="h-5 w-5 animate-spin inline mr-2" />
+                      ) : (
+                        <Upload className="h-5 w-5 inline mr-2" />
+                      )}
+                      {isUploading ? "Uploading..." : "Choose Files"}
+                    </div>
+                  </div>
+                </label>
+                <p className="text-sm text-gray-600 mt-4">
+                  Upload PDF or DOCX files (Max 10MB each)
                 </p>
               </div>
-              <p className="text-sm text-gray-600 mb-4">
-                Document upload coming soon. Please use other options for now.
+
+              {uploadedFiles.length > 0 && !isUploading && (
+                <div className="space-y-2 mb-4">
+                  <p className="font-bold text-sm uppercase">Selected Files:</p>
+                  {uploadedFiles.map((file, idx) => (
+                    <div key={idx} className="flex items-center gap-2 border-[2px] border-black bg-lime-100 p-3">
+                      <span className="flex-1 text-sm font-medium">{file.name}</span>
+                      <span className="text-xs text-gray-600">
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isUploading && (
+                <div className="text-center py-4">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+                  <p className="font-bold">Uploading and processing documents...</p>
+                  <p className="text-sm text-gray-600">This may take a moment</p>
+                </div>
+              )}
+
+              <p className="text-xs text-gray-500 mt-4">
+                Note: Documents will be uploaded to Cloudflare R2 and scraped with Firecrawl.
+                Make sure your R2 credentials are configured.
               </p>
             </div>
           </div>
