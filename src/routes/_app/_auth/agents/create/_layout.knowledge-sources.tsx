@@ -402,38 +402,67 @@ function KnowledgeSourcesPage() {
                     {searchResults.map((result) => (
                       <div
                         key={result.url}
-                        onClick={() => toggleUrlSelection(result.url)}
-                        className={cn(
-                          "cursor-pointer border-[3px] border-black p-4 transition-all",
-                          selectedUrls.has(result.url)
-                            ? "bg-lime-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                            : "bg-gray-50 hover:bg-gray-100"
-                        )}
+                        className="relative group"
                       >
-                        <h4 className="font-bold mb-1">{result.title}</h4>
-                        <p className="text-sm text-gray-600 mb-2">{result.description}</p>
-                        <p className="text-xs text-gray-500 break-all">{result.url}</p>
+                        <div className="absolute -bottom-1 -right-1 h-full w-full bg-black"></div>
+                        <div
+                          onClick={() => toggleUrlSelection(result.url)}
+                          className={cn(
+                            "cursor-pointer border-[3px] border-black p-4 transition-all relative",
+                            selectedUrls.has(result.url)
+                              ? "bg-lime-200"
+                              : "bg-white hover:bg-gray-50"
+                          )}
+                        >
+                          {/* Checkbox */}
+                          <div className="absolute top-3 right-3">
+                            <div className={cn(
+                              "h-6 w-6 border-[3px] border-black flex items-center justify-center font-bold text-sm",
+                              selectedUrls.has(result.url) ? "bg-lime-400" : "bg-white"
+                            )}>
+                              {selectedUrls.has(result.url) && "✓"}
+                            </div>
+                          </div>
+
+                          <h4 className="font-bold mb-1 pr-8">{result.title}</h4>
+                          <p className="text-sm text-gray-600 mb-2 line-clamp-2">{result.description}</p>
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs text-gray-500 truncate flex-1">{result.url}</p>
+                            <a
+                              href={result.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="border-[2px] border-black bg-cyan-200 px-2 py-1 text-xs font-bold hover:bg-cyan-300 transition-colors"
+                            >
+                              Open ↗
+                            </a>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
 
-                  <Button
+                  <button
                     onClick={handleSearchSubmit}
                     disabled={selectedUrls.size === 0 || isScrapingUrls}
-                    className="relative border-[3px] border-black bg-orange-400 px-8 py-4 font-bold uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                    className="relative w-full group"
                   >
-                    {isScrapingUrls ? (
-                      <>
-                        <Loader2 className="h-5 w-5 animate-spin mr-2 inline" />
-                        Scraping...
-                      </>
-                    ) : (
-                      <>
-                        Scrape {selectedUrls.size} Selected
-                        <ArrowRight className="h-5 w-5 ml-2 inline" />
-                      </>
-                    )}
-                  </Button>
+                    <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+                    <div className="relative flex items-center justify-center gap-2 border-[4px] border-black bg-orange-400 px-8 py-4 font-bold uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px]">
+                      {isScrapingUrls ? (
+                        <>
+                          <Loader2 className="h-6 w-6 animate-spin" />
+                          Scraping {selectedUrls.size} URLs...
+                        </>
+                      ) : (
+                        <>
+                          Scrape {selectedUrls.size} Selected
+                          <ArrowRight className="h-6 w-6" />
+                        </>
+                      )}
+                    </div>
+                  </button>
                 </>
               )}
             </div>
