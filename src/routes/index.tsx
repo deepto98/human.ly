@@ -34,13 +34,15 @@ function Index() {
         <div className="mx-auto flex max-w-7xl items-center justify-between p-4">
           <Link to="/" className="flex items-center">
             <Logo showText={true} />
+            {/* Underline */}
+            <div className="absolute left-0 top-full h-[2px] w-24 bg-orange-400"></div>
           </Link>
           <div className="flex items-center gap-4">
             {isAuthenticated ? (
               <Link
                 to={DashboardRoute.fullPath}
                 className={cn(
-                  "relative border-[3px] border-black bg-orange-400 px-6 py-2 font-bold uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px]"
+                  "relative border-[3px] border-black bg-orange-400 px-6 py-2 font-bold uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] text-black"
                 )}
               >
                 Dashboard
@@ -50,10 +52,10 @@ function Index() {
                 onClick={() => setShowAuthModal(true)}
                 disabled={isLoading}
                 className={cn(
-                  "relative border-[3px] border-black bg-orange-400 px-6 py-2 font-bold uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px]"
+                  "relative border-[3px] border-black bg-orange-400 px-6 py-2 font-bold uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] text-black"
                 )}
               >
-                {isLoading && <Loader2 className="animate-spin h-4 w-4 mr-2 inline" />}
+                {isLoading && <Loader2 className="animate-spin h-4 w-4 mr-2 inline text-black" />}
                 {!isLoading && "Get Started"}
               </button>
             )}
