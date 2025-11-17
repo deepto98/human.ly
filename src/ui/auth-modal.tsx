@@ -36,9 +36,9 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 p-2 border-[3px] border-black hover:bg-gray-100 transition-colors"
+            className="absolute right-4 top-4 p-2 border-[3px] border-black hover:bg-red-100 transition-colors bg-white"
           >
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5 text-black" />
           </button>
 
           {step === "signIn" ? (
@@ -85,7 +85,7 @@ function LoginForm({ onSubmit }: { onSubmit: (email: string) => void }) {
         className="group relative"
       >
         <div className="absolute -bottom-1 -right-1 h-full w-full bg-black"></div>
-        <div className="relative flex items-center justify-center gap-3 border-[3px] border-black bg-white p-4 font-bold transition-all hover:translate-x-[2px] hover:translate-y-[2px]">
+        <div className="relative flex items-center justify-center gap-3 border-[3px] border-black bg-white p-4 font-bold transition-all hover:translate-x-[2px] hover:translate-y-[2px] text-black">
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path
               fill="#4285F4"

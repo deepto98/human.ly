@@ -41,7 +41,7 @@ export function Logo({ width, height, className, showText = true, ...args }: Log
         </div>
       </div>
       {showText && (
-        <span className="text-2xl font-black tracking-tight text-primary">
+        <span className="text-2xl font-black tracking-tight text-black">
           {siteConfig.siteTitle}
         </span>
       )}
