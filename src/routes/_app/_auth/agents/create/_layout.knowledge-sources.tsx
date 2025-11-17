@@ -23,8 +23,6 @@ interface SearchResult {
 function KnowledgeSourcesPage() {
   const navigate = useNavigate();
   const [selectedType, setSelectedType] = useState<SourceType | null>(null);
-  const [agentId, setAgentId] = useState<string | null>(null);
-  const [isCreatingAgent, setIsCreatingAgent] = useState(false);
 
   // Topic state
   const [topic, setTopic] = useState("");
@@ -41,42 +39,20 @@ function KnowledgeSourcesPage() {
   // Document state
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
-  // Mutations
-  const createAgent = useConvexMutation(api.agents.createAgent);
-  const addTopicSource = useConvexMutation(api.knowledgeSources.addTopicSource);
-  const addUrlSource = useConvexAction(api.knowledgeSources.addUrlSource);
+  // Actions - no agent creation yet
   const searchWeb = useConvexAction(api.knowledgeSources.searchWebForSources);
-  const addWebSearchSources = useConvexAction(api.knowledgeSources.addWebSearchSources);
-
-  // Initialize agent on mount
-  useEffect(() => {
-    const initAgent = async () => {
-      if (!agentId && !isCreatingAgent) {
-        setIsCreatingAgent(true);
-        try {
-          const id = await createAgent({});
-          setAgentId(id as string);
-          console.log("Agent created:", id);
-        } catch (error) {
-          console.error("Failed to create agent:", error);
-          alert("Failed to create agent. Please make sure you're logged in.");
-          navigate({ to: "/dashboard" });
-        }
-        setIsCreatingAgent(false);
-      }
-    };
-    initAgent();
-  }, []);
 
   const handleTopicSubmit = async () => {
-    if (!agentId || !topic.trim()) return;
+    if (!topic.trim()) return;
 
-    await addTopicSource({
-      agentId: agentId as any,
-      topic: topic.trim(),
+    // Pass knowledge source data via URL params (not saved yet)
+    navigate({ 
+      to: "/agents/create/questions", 
+      search: { 
+        sourceType: "topic",
+        sourceContent: topic.trim()
+      } 
     });
-
-    navigate({ to: "/agents/create/questions", search: { agentId: agentId } });
   };
 
   const handleAddUrl = () => {
@@ -91,23 +67,16 @@ function KnowledgeSourcesPage() {
   };
 
   const handleUrlsSubmit = async () => {
-    if (!agentId || urls.length === 0) return;
+    if (urls.length === 0) return;
 
-    setIsScrapingUrls(true);
-    try {
-      for (const url of urls) {
-        await addUrlSource({
-          agentId: agentId as any,
-          url,
-        });
-      }
-
-      navigate({ to: "/agents/create/questions", search: { agentId: agentId } });
-    } catch (error) {
-      console.error("Failed to scrape URLs:", error);
-      alert("Failed to scrape some URLs. Please check the URLs and try again.");
-      setIsScrapingUrls(false);
-    }
+    // Pass URLs via URL params (scraping will happen when agent is saved)
+    navigate({ 
+      to: "/agents/create/questions", 
+      search: { 
+        sourceType: "url",
+        sourceContent: JSON.stringify(urls)
+      } 
+    });
   };
 
   const handleSearch = async () => {
@@ -144,68 +113,31 @@ function KnowledgeSourcesPage() {
   };
 
   const handleSearchSubmit = async () => {
-    if (!agentId || selectedUrls.size === 0) return;
+    if (selectedUrls.size === 0) return;
 
-    setIsScrapingUrls(true);
-    try {
-      await addWebSearchSources({
-        agentId: agentId as any,
-        urls: Array.from(selectedUrls),
-      });
-
-      navigate({ to: "/agents/create/questions", search: { agentId: agentId } });
-    } catch (error) {
-      console.error("Failed to scrape sources:", error);
-      alert("Failed to scrape selected websites. Please try again.");
-      setIsScrapingUrls(false);
-    }
+    // Pass selected URLs via URL params
+    navigate({ 
+      to: "/agents/create/questions", 
+      search: { 
+        sourceType: "web_search",
+        sourceContent: JSON.stringify(Array.from(selectedUrls))
+      } 
+    });
   };
 
-  const uploadDocumentSource = useConvexAction(api.knowledgeSources.uploadDocumentSource);
-  const [isUploading, setIsUploading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  const [isScrapingUrls, setIsScrapingUrls] = useState(false);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || !agentId) return;
+    if (!e.target.files) return;
     
     const files = Array.from(e.target.files);
     setUploadedFiles(files);
-    setIsUploading(true);
 
-    try {
-      for (const file of files) {
-        // Read file as ArrayBuffer
-        const arrayBuffer = await file.arrayBuffer();
-        
-        // Upload and create knowledge source
-        await uploadDocumentSource({
-          agentId: agentId as any,
-          filename: file.name,
-          fileData: arrayBuffer,
-          contentType: file.type || "application/pdf",
-        });
-      }
-
-      // Navigate to next step
-      navigate({ to: "/agents/create/questions", search: { agentId: agentId } });
-    } catch (error) {
-      console.error("Upload failed:", error);
-      alert("Failed to upload documents. Please check your R2 configuration.");
-      setIsUploading(false);
-    }
+    // For now, just show files selected
+    // Actual upload will happen when agent is saved
+    alert("Document upload will be implemented when saving the full agent. For now, please use Topic or URL options.");
   };
 
-  if (!agentId || isCreatingAgent) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-amber-50">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
-          <p className="text-lg font-bold">Creating your agent...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-amber-50 p-6">
