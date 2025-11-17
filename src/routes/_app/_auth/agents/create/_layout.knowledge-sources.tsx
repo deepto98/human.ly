@@ -7,6 +7,8 @@ import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
 import { Loader2, Plus, X, Search, Upload, Link as LinkIcon, Lightbulb, ArrowRight } from "lucide-react";
 import { cn } from "@/utils/misc";
+import { AppLayout } from "@/ui/app-layout";
+import { StepIndicator } from "@/ui/step-indicator";
 
 export const Route = createFileRoute("/_app/_auth/agents/create/_layout/knowledge-sources")({
   component: KnowledgeSourcesPage,
@@ -229,15 +231,26 @@ function KnowledgeSourcesPage() {
 
 
   return (
-    <div className="min-h-screen bg-amber-50 p-6">
-      <div className="mx-auto max-w-6xl">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="mb-2 text-5xl font-black text-black">Define Knowledge Sources</h1>
-          <p className="text-lg text-gray-700 font-medium">
-            Choose how to generate interview questions
-          </p>
-        </div>
+    <AppLayout>
+      <div className="min-h-screen p-6">
+        <div className="mx-auto max-w-6xl">
+          {/* Step Indicator */}
+          <StepIndicator 
+            currentStep={1}
+            steps={[
+              { number: 1, label: "Knowledge" },
+              { number: 2, label: "Questions" },
+              { number: 3, label: "Behavior" }
+            ]}
+          />
+
+          {/* Header */}
+          <div className="mb-8 text-center">
+            <h1 className="mb-2 text-5xl font-black text-black">Define Knowledge Sources</h1>
+            <p className="text-lg text-gray-700 font-medium">
+              Choose how to generate interview questions
+            </p>
+          </div>
 
         {/* Source Type Selection */}
         {!selectedType && (
@@ -623,8 +636,9 @@ function KnowledgeSourcesPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }
 
