@@ -400,15 +400,22 @@ function KnowledgeSourcesPage() {
                 <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !isSearching) {
+                      handleSearch();
+                    }
+                  }}
                   placeholder="Search for a topic..."
-                  className="flex-1 border-[3px] border-black text-lg p-4"
+                  className="flex-1 border-[3px] border-black text-lg p-4 text-black"
                 />
                 <button
                   type="button"
-                  onClick={handleSearch}
-                  disabled={isSearching}
-                  className="border-[3px] border-black bg-pink-300 px-6 py-3 font-bold hover:bg-pink-400 transition-colors disabled:opacity-50"
+                  onClick={() => {
+                    console.log("Search button clicked, query:", searchQuery);
+                    handleSearch();
+                  }}
+                  disabled={isSearching || !searchQuery.trim()}
+                  className="border-[3px] border-black bg-pink-300 px-6 py-3 font-bold hover:bg-pink-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSearching ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
