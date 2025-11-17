@@ -119,7 +119,7 @@ function QuestionsPage() {
         </div>
 
         {/* Configuration Section */}
-        {(!questions || questions.length === 0) && (
+        {(!generatedQuestions || generatedQuestions.length === 0) && (
           <div className="relative mb-8">
             <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
             <div className="relative border-[4px] border-black bg-white p-8">
