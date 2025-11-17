@@ -24,10 +24,12 @@ export function AppLayout({ children }: AppLayoutProps) {
     <div className="min-h-screen bg-amber-50">
       {/* Top Navigation - Neobrutalist */}
       <nav className="sticky top-0 z-50 border-b-[4px] border-black bg-white">
-        <div className="mx-auto flex max-w-full items-center justify-between p-4">
+        <div className="mx-auto flex max-w-7xl items-center justify-between p-4">
           {/* Left: Logo */}
-          <Link to="/dashboard" className="flex items-center gap-3">
+          <Link to="/dashboard" className="flex items-center gap-3 relative">
             <Logo showText={true} />
+            {/* Underline under logo */}
+            <div className="absolute left-0 -bottom-1 h-[2px] w-24 bg-orange-400"></div>
           </Link>
 
           {/* Right: User Menu */}
@@ -107,28 +109,37 @@ export function AppLayout({ children }: AppLayoutProps) {
         {/* Sidebar - Neobrutalist Collapsible */}
         <aside className={cn(
           "sticky top-[73px] h-[calc(100vh-73px)] border-r-[4px] border-black bg-white transition-all duration-300",
-          isSidebarOpen ? "w-64" : "w-16"
+          isSidebarOpen ? "w-64" : "w-20"
         )}>
-          <div className="p-4">
+          <div className="p-3">
             {/* Toggle Button */}
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="mb-4 border-[3px] border-black bg-cyan-200 p-2 hover:bg-cyan-300 transition-colors w-full flex items-center justify-center"
+              className={cn(
+                "mb-4 border-[3px] border-black bg-cyan-200 hover:bg-cyan-300 transition-colors w-full flex items-center justify-center",
+                isSidebarOpen ? "p-3" : "p-4"
+              )}
             >
-              {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
 
             {/* Navigation Items */}
-            <nav className="space-y-2">
+            <nav className="space-y-3">
               <Link
                 to="/dashboard"
                 className="block"
               >
                 <div className="relative group">
                   <div className="absolute -bottom-0.5 -right-0.5 h-full w-full bg-black"></div>
-                  <div className="relative border-[3px] border-black bg-white hover:bg-orange-100 p-3 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <LayoutDashboard className="h-5 w-5 flex-shrink-0" />
+                  <div className={cn(
+                    "relative border-[3px] border-black bg-white hover:bg-orange-100 transition-colors",
+                    isSidebarOpen ? "p-3" : "p-4"
+                  )}>
+                    <div className={cn(
+                      "flex items-center",
+                      isSidebarOpen ? "gap-3" : "justify-center"
+                    )}>
+                      <LayoutDashboard className={cn("flex-shrink-0", isSidebarOpen ? "h-5 w-5" : "h-6 w-6")} />
                       {isSidebarOpen && <span className="font-bold">Dashboard</span>}
                     </div>
                   </div>
@@ -141,9 +152,15 @@ export function AppLayout({ children }: AppLayoutProps) {
               >
                 <div className="relative group">
                   <div className="absolute -bottom-0.5 -right-0.5 h-full w-full bg-black"></div>
-                  <div className="relative border-[3px] border-black bg-white hover:bg-lime-100 p-3 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <Settings className="h-5 w-5 flex-shrink-0" />
+                  <div className={cn(
+                    "relative border-[3px] border-black bg-white hover:bg-lime-100 transition-colors",
+                    isSidebarOpen ? "p-3" : "p-4"
+                  )}>
+                    <div className={cn(
+                      "flex items-center",
+                      isSidebarOpen ? "gap-3" : "justify-center"
+                    )}>
+                      <Settings className={cn("flex-shrink-0", isSidebarOpen ? "h-5 w-5" : "h-6 w-6")} />
                       {isSidebarOpen && <span className="font-bold">Settings</span>}
                     </div>
                   </div>
@@ -156,9 +173,15 @@ export function AppLayout({ children }: AppLayoutProps) {
               >
                 <div className="relative group">
                   <div className="absolute -bottom-0.5 -right-0.5 h-full w-full bg-black"></div>
-                  <div className="relative border-[3px] border-black bg-white hover:bg-pink-100 p-3 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <CreditCard className="h-5 w-5 flex-shrink-0" />
+                  <div className={cn(
+                    "relative border-[3px] border-black bg-white hover:bg-pink-100 transition-colors",
+                    isSidebarOpen ? "p-3" : "p-4"
+                  )}>
+                    <div className={cn(
+                      "flex items-center",
+                      isSidebarOpen ? "gap-3" : "justify-center"
+                    )}>
+                      <CreditCard className={cn("flex-shrink-0", isSidebarOpen ? "h-5 w-5" : "h-6 w-6")} />
                       {isSidebarOpen && <span className="font-bold">Billing</span>}
                     </div>
                   </div>
