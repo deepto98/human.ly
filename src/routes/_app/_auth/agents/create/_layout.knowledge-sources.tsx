@@ -100,6 +100,7 @@ function KnowledgeSourcesPage() {
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
 
+    setIsSearching(true);
     try {
       const results = await searchWeb({
         query: searchQuery.trim(),
@@ -111,6 +112,7 @@ function KnowledgeSourcesPage() {
       console.error("Search failed:", error);
       alert("Failed to search. Please check your Firecrawl API key.");
     }
+    setIsSearching(false);
   };
 
   const toggleUrlSelection = (url: string) => {
@@ -126,6 +128,7 @@ function KnowledgeSourcesPage() {
   const handleSearchSubmit = async () => {
     if (!agentId || selectedUrls.size === 0) return;
 
+    setIsScrapingUrls(true);
     try {
       await addWebSearchSources({
         agentId: agentId as any,
@@ -136,11 +139,14 @@ function KnowledgeSourcesPage() {
     } catch (error) {
       console.error("Failed to scrape sources:", error);
       alert("Failed to scrape selected websites. Please try again.");
+      setIsScrapingUrls(false);
     }
   };
 
   const uploadDocumentSource = useConvexAction(api.knowledgeSources.uploadDocumentSource);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isScrapingUrls, setIsScrapingUrls] = useState(false);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !agentId) return;
@@ -274,17 +280,17 @@ function KnowledgeSourcesPage() {
                 placeholder="e.g., Microsoft Excel, Python Programming, Marketing Strategy"
                 className="mb-4 border-[3px] border-black text-lg p-4"
               />
-              <Button
+              <button
                 onClick={handleTopicSubmit}
-                disabled={!topic.trim() || addTopicSource.isPending}
-                className="relative border-[3px] border-black bg-orange-400 px-8 py-4 font-bold uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                disabled={!topic.trim()}
+                className="relative w-full group"
               >
-                {addTopicSource.isPending ? (
-                  <Loader2 className="h-5 w-5 animate-spin mr-2 inline" />
-                ) : null}
-                Continue
-                <ArrowRight className="h-5 w-5 ml-2 inline" />
-              </Button>
+                <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+                <div className="relative flex items-center justify-center gap-2 border-[4px] border-black bg-orange-400 px-8 py-4 font-bold uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px]">
+                  Continue
+                  <ArrowRight className="h-5 w-5" />
+                </div>
+              </button>
             </div>
           </div>
         )}
@@ -333,17 +339,26 @@ function KnowledgeSourcesPage() {
                 </div>
               )}
 
-              <Button
+              <button
                 onClick={handleUrlsSubmit}
-                disabled={urls.length === 0 || addUrlSource.isPending}
-                className="relative border-[3px] border-black bg-orange-400 px-8 py-4 font-bold uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                disabled={urls.length === 0 || isScrapingUrls}
+                className="relative w-full group"
               >
-                {addUrlSource.isPending ? (
-                  <Loader2 className="h-5 w-5 animate-spin mr-2 inline" />
-                ) : null}
-                Scrape & Continue
-                <ArrowRight className="h-5 w-5 ml-2 inline" />
-              </Button>
+                <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+                <div className="relative flex items-center justify-center gap-2 border-[4px] border-black bg-orange-400 px-8 py-4 font-bold uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px]">
+                  {isScrapingUrls ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Scraping...
+                    </>
+                  ) : (
+                    <>
+                      Scrape & Continue
+                      <ArrowRight className="h-5 w-5" />
+                    </>
+                  )}
+                </div>
+              </button>
             </div>
           </div>
         )}
@@ -370,10 +385,10 @@ function KnowledgeSourcesPage() {
                 />
                 <Button
                   onClick={handleSearch}
-                  disabled={searchWeb.isPending}
+                  disabled={isSearching}
                   className="border-[3px] border-black bg-pink-300 px-6 font-bold"
                 >
-                  {searchWeb.isPending ? (
+                  {isSearching ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
                     <Search className="h-5 w-5" />
@@ -404,14 +419,20 @@ function KnowledgeSourcesPage() {
 
                   <Button
                     onClick={handleSearchSubmit}
-                    disabled={selectedUrls.size === 0 || addWebSearchSources.isPending}
+                    disabled={selectedUrls.size === 0 || isScrapingUrls}
                     className="relative border-[3px] border-black bg-orange-400 px-8 py-4 font-bold uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                   >
-                    {addWebSearchSources.isPending ? (
-                      <Loader2 className="h-5 w-5 animate-spin mr-2 inline" />
-                    ) : null}
-                    Scrape {selectedUrls.size} Selected
-                    <ArrowRight className="h-5 w-5 ml-2 inline" />
+                    {isScrapingUrls ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin mr-2 inline" />
+                        Scraping...
+                      </>
+                    ) : (
+                      <>
+                        Scrape {selectedUrls.size} Selected
+                        <ArrowRight className="h-5 w-5 ml-2 inline" />
+                      </>
+                    )}
                   </Button>
                 </>
               )}
