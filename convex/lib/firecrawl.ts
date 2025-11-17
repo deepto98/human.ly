@@ -95,18 +95,21 @@ export async function searchWeb(query: string, maxResults: number = 10): Promise
     const firecrawl = getFirecrawlClient();
     
     console.log("Firecrawl search starting for:", query);
-    const searchResults = await firecrawl.search(query, {
+    const searchResponse = await firecrawl.search(query, {
       limit: maxResults,
     });
 
-    console.log("Raw search results:", JSON.stringify(searchResults).substring(0, 500));
+    console.log("Raw search response:", JSON.stringify(searchResponse).substring(0, 500));
 
-    // searchResults is a SearchData object with a data array
-    const results = Array.isArray(searchResults) ? searchResults : (searchResults as any).data || [];
+    // According to Firecrawl docs, response structure is:
+    // { success: true, data: { web: [...], images: [...], news: [...] } }
+    // The SDK might return just the data object or the full response
+    const data = (searchResponse as any).data || searchResponse;
+    const webResults = data.web || [];
 
-    console.log("Processed results count:", results.length);
+    console.log("Web results count:", webResults.length);
 
-    const mappedResults = results.map((result: any) => ({
+    const mappedResults = webResults.map((result: any) => ({
       url: result.url,
       title: result.title || result.url || "Untitled",
       description: result.description || result.snippet || "",
