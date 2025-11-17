@@ -87,14 +87,21 @@ function KnowledgeSourcesPage() {
   const handleUrlsSubmit = async () => {
     if (!agentId || urls.length === 0) return;
 
-    for (const url of urls) {
-      await addUrlSource({
-        agentId: agentId as any,
-        url,
-      });
-    }
+    setIsScrapingUrls(true);
+    try {
+      for (const url of urls) {
+        await addUrlSource({
+          agentId: agentId as any,
+          url,
+        });
+      }
 
-    navigate({ to: "/agents/create/questions", search: { agentId: agentId } });
+      navigate({ to: "/agents/create/questions", search: { agentId: agentId } });
+    } catch (error) {
+      console.error("Failed to scrape URLs:", error);
+      alert("Failed to scrape some URLs. Please check the URLs and try again.");
+      setIsScrapingUrls(false);
+    }
   };
 
   const handleSearch = async () => {
