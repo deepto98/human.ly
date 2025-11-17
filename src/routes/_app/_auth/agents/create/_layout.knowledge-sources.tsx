@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useConvexMutation, useConvexAction } from "@convex-dev/react-query";
+import { useState } from "react";
+import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@cvx/_generated/api";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
@@ -43,7 +42,6 @@ function KnowledgeSourcesPage() {
 
   // Actions - no agent creation yet
   const searchWeb = useConvexAction(api.knowledgeSources.searchWebForSources);
-  const scrapeUrlAction = useConvexAction(api.knowledgeSources.scrapeUrlForContent);
   const scrapeMultipleUrls = useConvexAction(api.knowledgeSources.scrapeMultipleUrlsForContent);
 
   const handleTopicSubmit = async () => {
@@ -170,7 +168,6 @@ function KnowledgeSourcesPage() {
 
   const [isSearching, setIsSearching] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [scrapedContents, setScrapedContents] = useState<string[]>([]);
 
   const uploadAndScrape = useConvexAction(api.storage.uploadAndScrapeDocument);
 
