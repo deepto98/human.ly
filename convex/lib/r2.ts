@@ -65,12 +65,17 @@ export async function uploadFile(
 
     await client.send(command);
 
+    // Internal R2 URL (for API access)
     const url = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${key}`;
+    
+    // Public URL format: R2_PUBLIC_URL/key (without bucket name)
     const publicUrl = R2_PUBLIC_URL ? `${R2_PUBLIC_URL}/${key}` : undefined;
+
+    console.log("Uploaded to R2:", { key, publicUrl });
 
     return {
       key,
-      url,
+      url: publicUrl || url, // Use public URL as primary URL if available
       publicUrl,
     };
   } catch (error) {
