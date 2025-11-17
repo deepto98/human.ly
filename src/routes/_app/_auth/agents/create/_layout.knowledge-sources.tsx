@@ -254,7 +254,8 @@ function KnowledgeSourcesPage() {
 
         {/* Source Type Selection */}
         {!selectedType && (
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          <>
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {/* Topic */}
             <button
               onClick={() => setSelectedType("topic")}
@@ -314,9 +315,9 @@ function KnowledgeSourcesPage() {
                 </p>
               </div>
             </button>
-            </div>
+          </div>
 
-            {/* Manual Question Builder Option */}
+          {/* Manual Question Builder Option */}
             <div className="mt-8 text-center">
               <div className="relative mb-3 flex items-center">
                 <div className="flex-1 border-t-[3px] border-black"></div>
@@ -342,9 +343,9 @@ function KnowledgeSourcesPage() {
               <p className="mt-3 text-sm text-gray-600">
                 Skip AI generation and create questions manually
               </p>
-            </div>
-          </>
-        )}
+          </div>
+        </>
+      )}
 
         {/* Topic Input */}
         {selectedType === "topic" && (
