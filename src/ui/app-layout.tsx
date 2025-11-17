@@ -15,8 +15,26 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { data: user } = useQuery(convexQuery(api.app.getCurrentUser, {}));
   const signOut = useSignOut();
   const navigate = useNavigate();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  
+  // Persist sidebar state in localStorage
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebarOpen');
+      return saved === null ? true : saved === 'true';
+    }
+    return true;
+  });
+  
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  // Save sidebar state to localStorage when it changes
+  const toggleSidebar = () => {
+    const newState = !isSidebarOpen;
+    setIsSidebarOpen(newState);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sidebarOpen', String(newState));
+    }
+  };
 
   if (!user) return null;
 
@@ -114,7 +132,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           <div className="p-3">
             {/* Toggle Button */}
             <button
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              onClick={toggleSidebar}
               className={cn(
                 "mb-4 border-[3px] border-black bg-cyan-200 hover:bg-cyan-300 transition-colors w-full flex items-center justify-center",
                 isSidebarOpen ? "p-3" : "p-4"
