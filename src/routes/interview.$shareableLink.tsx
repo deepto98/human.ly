@@ -531,7 +531,7 @@ function InterviewPage() {
                           onChange={(e) => setCurrentAnswer(e.target.value)}
                           placeholder="Type your answer here..."
                           rows={6}
-                          className="w-full border-[3px] border-black p-4 text-lg resize-none"
+                          className="w-full border-[3px] border-black p-4 text-lg resize-none bg-white text-black"
                         />
                         <button
                           onClick={startListening}
