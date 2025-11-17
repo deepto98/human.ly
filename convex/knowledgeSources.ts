@@ -155,6 +155,54 @@ export const searchWebForSources = action({
 });
 
 /**
+ * Scrape a single URL and return content (for immediate use)
+ */
+export const scrapeUrlForContent = action({
+  args: {
+    url: v.string(),
+  },
+  handler: async (ctx, args): Promise<{ scrapedContent: string }> => {
+    const scraped = await scrapeUrl(args.url);
+    const cleanContent = extractMainContent(scraped.content);
+
+    return {
+      scrapedContent: cleanContent,
+    };
+  },
+});
+
+/**
+ * Scrape multiple URLs and return combined content (for immediate use)
+ */
+export const scrapeMultipleUrlsForContent = action({
+  args: {
+    urls: v.array(v.string()),
+  },
+  handler: async (ctx, args): Promise<{ combinedContent: string; individualContents: string[] }> => {
+    const scrapedResults = await scrapeUrls(args.urls);
+
+    const contents: string[] = [];
+
+    for (const result of scrapedResults) {
+      if (result.error || !result.content) {
+        console.warn("Failed to scrape URL:", result.url, result.error);
+        continue;
+      }
+
+      const cleanContent = extractMainContent(result.content);
+      contents.push(cleanContent);
+    }
+
+    const combinedContent = contents.join("\n\n--- URL Separator ---\n\n");
+
+    return {
+      combinedContent,
+      individualContents: contents,
+    };
+  },
+});
+
+/**
  * Add multiple URLs from web search results
  */
 export const addWebSearchSources = action({
