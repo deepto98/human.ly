@@ -168,8 +168,31 @@ function QuestionsPage() {
             </p>
           </div>
 
-        {/* Configuration Section */}
-        {(!generatedQuestions || generatedQuestions.length === 0) && (
+        {/* Manual Mode Message */}
+        {searchParams.sourceType === "manual" && generatedQuestions.length === 0 && (
+          <div className="relative mb-8">
+            <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+            <div className="relative border-[4px] border-black bg-gradient-to-r from-purple-200 to-pink-200 p-12 text-center">
+              <h2 className="text-4xl font-black mb-4 text-black">Build Questions Manually</h2>
+              <p className="text-lg text-gray-800 font-medium mb-6">
+                Create your own custom questions from scratch
+              </p>
+              <button
+                onClick={() => setIsAddingQuestion(true)}
+                className="relative inline-block group"
+              >
+                <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+                <div className="relative flex items-center justify-center gap-2 border-[4px] border-black bg-orange-400 px-8 py-4 font-bold uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px]">
+                  <Plus className="h-6 w-6" />
+                  Add Your First Question
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* AI Configuration Section */}
+        {searchParams.sourceType !== "manual" && (!generatedQuestions || generatedQuestions.length === 0) && (
           <div className="relative mb-8">
             <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
             <div className="relative border-[4px] border-black bg-white p-8">
