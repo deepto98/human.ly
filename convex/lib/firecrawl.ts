@@ -94,19 +94,27 @@ export async function searchWeb(query: string, maxResults: number = 10): Promise
   try {
     const firecrawl = getFirecrawlClient();
     
+    console.log("Firecrawl search starting for:", query);
     const searchResults = await firecrawl.search(query, {
       limit: maxResults,
     });
 
+    console.log("Raw search results:", JSON.stringify(searchResults).substring(0, 500));
+
     // searchResults is a SearchData object with a data array
     const results = Array.isArray(searchResults) ? searchResults : (searchResults as any).data || [];
 
-    return results.map((result: any) => ({
+    console.log("Processed results count:", results.length);
+
+    const mappedResults = results.map((result: any) => ({
       url: result.url,
-      title: result.title || "",
-      description: result.description || "",
+      title: result.title || result.url || "Untitled",
+      description: result.description || result.snippet || "",
       content: result.content || "",
     }));
+
+    console.log("Returning mapped results:", mappedResults.length);
+    return mappedResults;
   } catch (error) {
     console.error("Error searching web:", query, error);
     throw new Error(`Failed to search: ${query}`);

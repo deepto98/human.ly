@@ -113,6 +113,7 @@ function KnowledgeSourcesPage() {
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
 
+    console.log("Starting search for:", searchQuery);
     setIsSearching(true);
     try {
       const results = await searchWeb({
@@ -120,12 +121,16 @@ function KnowledgeSourcesPage() {
         maxResults: 10,
       });
 
+      console.log("Search results received:", results);
       setSearchResults(results as SearchResult[]);
+      console.log("Search results state updated, count:", results.length);
     } catch (error) {
       console.error("Search failed:", error);
       alert("Failed to search. Please check your Firecrawl API key.");
+    } finally {
+      setIsSearching(false);
+      console.log("Search completed, isSearching set to false");
     }
-    setIsSearching(false);
   };
 
   const toggleUrlSelection = (url: string) => {
