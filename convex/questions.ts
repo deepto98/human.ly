@@ -14,7 +14,62 @@ import {
 } from "./lib/openai";
 
 /**
- * Generate questions from knowledge sources
+ * Generate questions directly from content (used in UI)
+ */
+export const generateQuestionsFromContent = action({
+  args: {
+    content: v.string(),
+    mcqCount: v.number(),
+    subjectiveCount: v.number(),
+    marksPerMCQ: v.number(),
+    marksPerSubjective: v.number(),
+  },
+  handler: async (ctx, args) => {
+    let mcqs: any[] = [];
+    let subjectiveQuestions: any[] = [];
+
+    // Check if it's a simple topic (short content)
+    const isSimpleTopic = args.content.length < 200 && !args.content.includes("\n");
+
+    if (isSimpleTopic) {
+      // Generate from topic
+      const generated = await generateQuestionsFromTopic(
+        args.content,
+        args.mcqCount,
+        args.subjectiveCount,
+        args.marksPerMCQ,
+        args.marksPerSubjective
+      );
+      mcqs = generated.mcqs;
+      subjectiveQuestions = generated.subjective;
+    } else {
+      // Generate from content
+      if (args.mcqCount > 0) {
+        mcqs = await generateMCQs(
+          args.content,
+          args.mcqCount,
+          args.marksPerMCQ
+        );
+      }
+
+      if (args.subjectiveCount > 0) {
+        subjectiveQuestions = await generateSubjectiveQuestions(
+          args.content,
+          args.subjectiveCount,
+          args.marksPerSubjective
+        );
+      }
+    }
+
+    return {
+      mcqs,
+      subjective: subjectiveQuestions,
+    };
+  },
+});
+
+/**
+ * Generate questions from knowledge sources (used for existing agents)
  */
 export const generateQuestions = action({
   args: {

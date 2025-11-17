@@ -46,45 +46,60 @@ function QuestionsPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  const generateQuestionsAction = useConvexAction(api.questions.generateQuestionsFromContent);
+
   const handleGenerate = async () => {
     if (mcqCount === 0 && subjectiveCount === 0) return;
+    if (!searchParams.sourceContent) {
+      alert("No content available. Please go back and select a knowledge source.");
+      return;
+    }
 
     setIsGenerating(true);
     try {
-      // For now, generate simple placeholder questions
-      // In full implementation, this would call OpenAI based on knowledge sources
-      const mockQuestions: Question[] = [];
+      console.log("Generating questions from content...");
+      
+      // Generate questions using OpenAI based on the scraped content
+      const result = await generateQuestionsAction({
+        content: searchParams.sourceContent,
+        mcqCount,
+        subjectiveCount,
+        marksPerMCQ,
+        marksPerSubjective,
+      });
+
+      // Convert to local format with temporary IDs
+      const allQuestions: Question[] = [];
       let order = 1;
 
-      // Generate MCQs
-      for (let i = 0; i < mcqCount; i++) {
-        mockQuestions.push({
-          _id: `mcq-${i}`,
+      result.mcqs.forEach((mcq: any) => {
+        allQuestions.push({
+          _id: `mcq-${order}`,
           type: "mcq",
-          questionText: `Sample MCQ ${i + 1} about ${searchParams.sourceContent || "the topic"}?`,
+          questionText: mcq.questionText,
           order: order++,
-          marks: marksPerMCQ,
-          options: ["Option A", "Option B", "Option C", "Option D"],
-          correctOption: 0,
+          marks: mcq.marks,
+          options: mcq.options,
+          correctOption: mcq.correctOption,
         });
-      }
+      });
 
-      // Generate Subjective
-      for (let i = 0; i < subjectiveCount; i++) {
-        mockQuestions.push({
-          _id: `subj-${i}`,
+      result.subjective.forEach((subj: any) => {
+        allQuestions.push({
+          _id: `subj-${order}`,
           type: "subjective",
-          questionText: `Explain topic ${i + 1} related to ${searchParams.sourceContent || "the subject"}.`,
+          questionText: subj.questionText,
           order: order++,
-          marks: marksPerSubjective,
-          keyPoints: ["Point 1", "Point 2", "Point 3"],
+          marks: subj.marks,
+          keyPoints: subj.keyPoints,
         });
-      }
+      });
 
-      setGeneratedQuestions(mockQuestions);
+      setGeneratedQuestions(allQuestions);
+      console.log("Questions generated:", allQuestions.length);
     } catch (error) {
-      console.error(error);
-      alert("Failed to generate questions.");
+      console.error("Failed to generate questions:", error);
+      alert("Failed to generate questions. Please check your OpenAI API key in Convex environment variables.");
     }
     setIsGenerating(false);
   };
