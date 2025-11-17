@@ -254,7 +254,7 @@ function KnowledgeSourcesPage() {
 
         {/* Source Type Selection */}
         {!selectedType && (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {/* Topic */}
             <button
               onClick={() => setSelectedType("topic")}
@@ -461,7 +461,7 @@ function KnowledgeSourcesPage() {
 
               {searchResults.length > 0 && (
                 <>
-                  <div className="grid gap-4 md:grid-cols-2 mb-6">
+                  <div className="grid gap-4 grid-cols-1 md:grid-cols-2 mb-6">
                     {searchResults.map((result) => (
                       <div
                         key={result.url}
