@@ -119,13 +119,13 @@ function BehaviorPage() {
 
               {/* Appearance */}
               <div>
-                <label className="mb-2 block text-lg font-bold uppercase">
+                <label className="mb-2 block text-lg font-bold uppercase text-black">
                   Appearance
                 </label>
                 <select
                   value={appearance}
                   onChange={(e) => setAppearance(e.target.value)}
-                  className="w-full border-[3px] border-black p-4 text-lg font-medium bg-white"
+                  className="w-full border-[3px] border-black p-4 text-lg font-medium bg-white text-black"
                 >
                   <option value="default_avatar">Default Avatar</option>
                   <option value="professional">Professional</option>
@@ -136,13 +136,13 @@ function BehaviorPage() {
 
               {/* Voice Type */}
               <div>
-                <label className="mb-2 block text-lg font-bold uppercase">
+                <label className="mb-2 block text-lg font-bold uppercase text-black">
                   Voice Type
                 </label>
                 <select
                   value={voiceType}
                   onChange={(e) => setVoiceType(e.target.value)}
-                  className="w-full border-[3px] border-black p-4 text-lg font-medium bg-white"
+                  className="w-full border-[3px] border-black p-4 text-lg font-medium bg-white text-black"
                 >
                   <option value="default">Default</option>
                   <option value="warm">Warm & Friendly</option>
