@@ -413,6 +413,22 @@ function QuestionsPage() {
             </div>
           </>
         )}
+
+        {/* Question Editor Modal */}
+        {(editingQuestion || isAddingQuestion) && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+            <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <QuestionEditor
+                question={editingQuestion || undefined}
+                onSave={handleSaveQuestion}
+                onCancel={() => {
+                  setEditingQuestion(null);
+                  setIsAddingQuestion(false);
+                }}
+              />
+            </div>
+          </div>
+        )}
         </div>
       </div>
     </AppLayout>
