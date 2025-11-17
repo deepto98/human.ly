@@ -127,15 +127,25 @@ function KnowledgeSourcesPage() {
 
   const [isSearching, setIsSearching] = useState(false);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     
     const files = Array.from(e.target.files);
     setUploadedFiles(files);
+  };
 
-    // For now, just show files selected
-    // Actual upload will happen when agent is saved
-    alert("Document upload will be implemented when saving the full agent. For now, please use Topic or URL options.");
+  const handleDocumentSubmit = () => {
+    if (uploadedFiles.length === 0) return;
+
+    // Store file names for now, actual upload happens when agent is saved
+    const fileNames = uploadedFiles.map(f => f.name);
+    navigate({ 
+      to: "/agents/create/questions", 
+      search: { 
+        sourceType: "document",
+        sourceContent: JSON.stringify(fileNames)
+      } 
+    });
   };
 
 
@@ -453,23 +463,35 @@ function KnowledgeSourcesPage() {
               </div>
 
               {uploadedFiles.length > 0 && (
-                <div className="space-y-2 mb-4">
-                  <p className="font-bold text-sm uppercase">Selected Files:</p>
-                  {uploadedFiles.map((file, idx) => (
-                    <div key={idx} className="flex items-center gap-2 border-[2px] border-black bg-lime-100 p-3">
-                      <span className="flex-1 text-sm font-medium">{file.name}</span>
-                      <span className="text-xs text-gray-600">
-                        {(file.size / 1024 / 1024).toFixed(2)} MB
-                      </span>
+                <>
+                  <div className="space-y-2 mb-4">
+                    <p className="font-bold text-sm uppercase">Selected Files:</p>
+                    {uploadedFiles.map((file, idx) => (
+                      <div key={idx} className="flex items-center gap-2 border-[2px] border-black bg-lime-100 p-3">
+                        <span className="flex-1 text-sm font-medium">{file.name}</span>
+                        <span className="text-xs text-gray-600">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={handleDocumentSubmit}
+                    className="relative w-full group"
+                  >
+                    <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+                    <div className="relative flex items-center justify-center gap-2 border-[4px] border-black bg-orange-400 px-8 py-4 font-bold uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px]">
+                      Continue with {uploadedFiles.length} File{uploadedFiles.length > 1 ? 's' : ''}
+                      <ArrowRight className="h-5 w-5" />
                     </div>
-                  ))}
-                </div>
+                  </button>
+                </>
               )}
 
-
               <p className="text-xs text-gray-500 mt-4">
-                Note: Documents will be uploaded to Cloudflare R2 and scraped with Firecrawl.
-                Make sure your R2 credentials are configured.
+                Note: Documents will be uploaded and processed when you save the agent.
+                Make sure to configure R2 credentials for full functionality.
               </p>
             </div>
           </div>
