@@ -10,6 +10,7 @@ import { cn } from "@/utils/misc";
 import { z } from "zod";
 import { AppLayout } from "@/ui/app-layout";
 import { StepIndicator } from "@/ui/step-indicator";
+import { QuestionEditor } from "@/ui/question-editor";
 
 export const Route = createFileRoute("/_app/_auth/agents/create/_layout/questions")({
   component: QuestionsPage,
@@ -47,6 +48,8 @@ function QuestionsPage() {
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+  const [isAddingQuestion, setIsAddingQuestion] = useState(false);
 
   const generateQuestionsAction = useConvexAction(api.questions.generateQuestionsFromContent);
 
@@ -122,6 +125,25 @@ function QuestionsPage() {
     if (confirm("Delete this question?")) {
       setGeneratedQuestions(generatedQuestions.filter(q => q._id !== questionId));
     }
+  };
+
+  const handleSaveQuestion = (updatedQuestion: any) => {
+    if (updatedQuestion._id) {
+      // Update existing question
+      setGeneratedQuestions(generatedQuestions.map(q => 
+        q._id === updatedQuestion._id ? { ...q, ...updatedQuestion } : q
+      ));
+    } else {
+      // Add new question
+      const newQuestion = {
+        ...updatedQuestion,
+        _id: `manual-${Date.now()}`,
+        order: generatedQuestions.length + 1,
+      };
+      setGeneratedQuestions([...generatedQuestions, newQuestion]);
+    }
+    setEditingQuestion(null);
+    setIsAddingQuestion(false);
   };
 
   return (
@@ -306,12 +328,22 @@ function QuestionsPage() {
                             </div>
                           </div>
                           
-                          <button
-                            onClick={() => handleDeleteQuestion(question._id)}
-                            className="p-2 border-[2px] border-black hover:bg-red-200 transition-colors"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setEditingQuestion(question)}
+                              className="p-2 border-[2px] border-black hover:bg-cyan-200 transition-colors"
+                              title="Edit question"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteQuestion(question._id)}
+                              className="p-2 border-[2px] border-black hover:bg-red-200 transition-colors"
+                              title="Delete question"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
 
                         {/* MCQ Options */}
@@ -353,6 +385,18 @@ function QuestionsPage() {
                     </div>
                   ))}
                 </div>
+
+                {/* Add Question Button */}
+                <button
+                  onClick={() => setIsAddingQuestion(true)}
+                  className="relative w-full group mb-4"
+                >
+                  <div className="absolute -bottom-1 -right-1 h-full w-full bg-black"></div>
+                  <div className="relative flex items-center justify-center gap-2 border-[3px] border-black bg-cyan-200 px-6 py-3 font-bold uppercase transition-all hover:translate-x-[1px] hover:translate-y-[1px]">
+                    <Plus className="h-5 w-5" />
+                    Add Question Manually
+                  </div>
+                </button>
 
                 {/* Continue Button */}
                 <button
