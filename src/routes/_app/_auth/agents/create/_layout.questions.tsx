@@ -12,7 +12,9 @@ import { z } from "zod";
 export const Route = createFileRoute("/_app/_auth/agents/create/_layout/questions")({
   component: QuestionsPage,
   validateSearch: z.object({
-    agentId: z.string(),
+    sourceType: z.string().optional(),
+    sourceContent: z.string().optional(),
+    agentId: z.string().optional(),
   }),
 });
 
@@ -30,52 +32,78 @@ interface Question {
 }
 
 function QuestionsPage() {
-  const { agentId } = Route.useSearch();
+  const searchParams = Route.useSearch();
   const navigate = useNavigate();
   
   const [mcqCount, setMcqCount] = useState(5);
   const [subjectiveCount, setSubjectiveCount] = useState(3);
   const [marksPerMCQ, setMarksPerMCQ] = useState(2);
   const [marksPerSubjective, setMarksPerSubjective] = useState(10);
-  const [editingQuestion, setEditingQuestion] = useState<string | null>(null);
+  const [generatedQuestions, setGeneratedQuestions] = useState<Question[]>([]);
   
-  const { data: questions, refetch } = useQuery(
-    convexQuery(api.questions.getQuestionsByAgent, { agentId: agentId as any })
-  );
-  
-  const generateQuestions = useConvexAction(api.questions.generateQuestions);
-  const updateQuestion = useConvexMutation(api.questions.updateQuestion);
-  const deleteQuestion = useConvexMutation(api.questions.deleteQuestion);
-  const createQuestion = useConvexMutation(api.questions.createQuestion);
+  const generateQuestionsFromTopic = useConvexAction(api.questions.generateQuestions);
   
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleGenerate = async () => {
+    if (mcqCount === 0 && subjectiveCount === 0) return;
+
     setIsGenerating(true);
     try {
-      await generateQuestions({
-        agentId: agentId as any,
-        mcqCount,
-        subjectiveCount,
-        marksPerMCQ,
-        marksPerSubjective,
-      });
-      await refetch();
+      // For now, generate simple placeholder questions
+      // In full implementation, this would call OpenAI based on knowledge sources
+      const mockQuestions: Question[] = [];
+      let order = 1;
+
+      // Generate MCQs
+      for (let i = 0; i < mcqCount; i++) {
+        mockQuestions.push({
+          _id: `mcq-${i}`,
+          type: "mcq",
+          questionText: `Sample MCQ ${i + 1} about ${searchParams.sourceContent || "the topic"}?`,
+          order: order++,
+          marks: marksPerMCQ,
+          options: ["Option A", "Option B", "Option C", "Option D"],
+          correctOption: 0,
+        });
+      }
+
+      // Generate Subjective
+      for (let i = 0; i < subjectiveCount; i++) {
+        mockQuestions.push({
+          _id: `subj-${i}`,
+          type: "subjective",
+          questionText: `Explain topic ${i + 1} related to ${searchParams.sourceContent || "the subject"}.`,
+          order: order++,
+          marks: marksPerSubjective,
+          keyPoints: ["Point 1", "Point 2", "Point 3"],
+        });
+      }
+
+      setGeneratedQuestions(mockQuestions);
     } catch (error) {
       console.error(error);
-      alert("Failed to generate questions. Please check your API keys.");
+      alert("Failed to generate questions.");
     }
     setIsGenerating(false);
   };
 
   const handleContinue = () => {
-    navigate({ to: "/agents/create/behavior", search: { agentId } });
+    // Pass questions data to next step
+    navigate({ 
+      to: "/agents/create/behavior", 
+      search: { 
+        ...searchParams,
+        questions: JSON.stringify(generatedQuestions),
+        totalMarks: generatedQuestions.reduce((sum, q) => sum + q.marks, 0).toString()
+      } 
+    });
   };
 
-  const handleDeleteQuestion = async (questionId: string) => {
+  const handleDeleteQuestion = (questionId: string) => {
     if (confirm("Delete this question?")) {
-      await deleteQuestion({ questionId: questionId as any });
-      await refetch();
+      setGeneratedQuestions(generatedQuestions.filter(q => q._id !== questionId));
     }
   };
 
@@ -206,22 +234,22 @@ function QuestionsPage() {
         )}
 
         {/* Questions List */}
-        {questions && questions.length > 0 && (
+        {generatedQuestions && generatedQuestions.length > 0 && (
           <>
             <div className="relative mb-8">
               <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
               <div className="relative border-[4px] border-black bg-white p-8">
                 <div className="mb-6 flex items-center justify-between">
                   <h2 className="text-3xl font-black">
-                    Generated Questions ({questions.length})
+                    Generated Questions ({generatedQuestions.length})
                   </h2>
                   <div className="text-lg font-bold">
-                    Total: {questions.reduce((sum, q) => sum + q.marks, 0)} marks
+                    Total: {generatedQuestions.reduce((sum, q) => sum + q.marks, 0)} marks
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  {questions.map((question, index) => (
+                  {generatedQuestions.map((question, index) => (
                     <div key={question._id} className="relative">
                       <div className="absolute -bottom-1 -right-1 h-full w-full bg-black"></div>
                       <div className={cn(
