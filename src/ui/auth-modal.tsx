@@ -70,9 +70,9 @@ function LoginForm({ onSubmit }: { onSubmit: (email: string) => void }) {
   });
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-16">
       {/* Header */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-4">
         <h2 className="text-4xl font-black text-black">Welcome!</h2>
         <p className="text-lg text-gray-700 font-medium">
           Sign in to create your AI interview agents
@@ -109,15 +109,15 @@ function LoginForm({ onSubmit }: { onSubmit: (email: string) => void }) {
       </button>
 
       {/* Divider */}
-      <div className="relative flex items-center justify-center">
+      {/* <div className="relative flex items-center justify-center">
         <div className="absolute w-full border-t-[3px] border-black"></div>
         <span className="relative bg-white px-4 text-sm font-bold uppercase text-gray-600">
           Or with email
         </span>
-      </div>
+      </div> */}
 
       {/* Email Form */}
-      <form
+      {/* <form
         className="flex flex-col gap-4"
         onSubmit={(e) => {
           e.preventDefault();
@@ -173,7 +173,7 @@ function LoginForm({ onSubmit }: { onSubmit: (email: string) => void }) {
             )}
           </div>
         </button>
-      </form>
+      </form> */}
 
       {/* Terms */}
       <p className="text-center text-xs text-gray-600">

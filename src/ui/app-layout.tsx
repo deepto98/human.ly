@@ -204,7 +204,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                 </div>
               </Link>
 
-              <Link
+              {/* <Link
                 to="/dashboard/settings/billing"
                 className="block"
               >
@@ -223,7 +223,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                     </div>
                   </div>
                 </div>
-              </Link>
+              </Link> */}
             </nav>
           </div>
         </aside>
