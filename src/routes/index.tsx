@@ -88,9 +88,12 @@ function Index() {
             {/* Main Heading */}
             <h1 className="mb-6 text-6xl font-black leading-tight text-black md:text-8xl lg:text-9xl">
               <span className="relative inline-block">
-                {/* Small "Interview" above the H */}
-                <span className="absolute -top-8 md:-top-12 left-0 text-2xl md:text-3xl font-serif italic -rotate-6 text-orange-600">
-                  Interview
+                {/* Small "interview" in handwriting style above the H */}
+                <span 
+                  className="absolute -top-6 md:-top-8 left-2 md:left-4 text-xl md:text-2xl -rotate-12 text-orange-600"
+                  style={{ fontFamily: 'cursive' }}
+                >
+                  interview
                 </span>
                 <span className="relative z-10">Humanly</span>
                 <span className="absolute -bottom-2 left-0 h-6 w-full bg-orange-400 -rotate-1"></span>
