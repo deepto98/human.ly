@@ -14,6 +14,15 @@ function AgentAttemptsPage() {
   const { agentId } = Route.useParams();
   const matches = useMatches();
   
+  // Always call all hooks (required by React Rules of Hooks)
+  const { data: agent } = useQuery(
+    convexQuery(api.agents.getAgent, { agentId: agentId as any })
+  );
+  
+  const { data: interviews } = useQuery(
+    convexQuery(api.interviews.getInterviewsByAgent, { agentId: agentId as any })
+  );
+  
   // Check if we're on the detail route (child route) by looking for attemptId in matches
   const isDetailRoute = matches.some(m => 
     m.routeId === '/_app/_auth/agents/$agentId/attempts/$attemptId' ||
@@ -24,14 +33,6 @@ function AgentAttemptsPage() {
   if (isDetailRoute) {
     return <Outlet />;
   }
-  
-  const { data: agent } = useQuery(
-    convexQuery(api.agents.getAgent, { agentId: agentId as any })
-  );
-  
-  const { data: interviews } = useQuery(
-    convexQuery(api.interviews.getInterviewsByAgent, { agentId: agentId as any })
-  );
 
   if (!agent) {
     return (
