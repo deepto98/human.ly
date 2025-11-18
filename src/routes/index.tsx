@@ -87,9 +87,11 @@ function Index() {
 
             {/* Main Heading */}
             <h1 className="mb-6 text-6xl font-black leading-tight text-black md:text-8xl lg:text-9xl">
-              Interview
-              <br />
               <span className="relative inline-block">
+                {/* Small "Interview" above the H */}
+                <span className="absolute -top-8 md:-top-12 left-0 text-2xl md:text-3xl font-serif italic -rotate-6 text-orange-600">
+                  Interview
+                </span>
                 <span className="relative z-10">Humanly</span>
                 <span className="absolute -bottom-2 left-0 h-6 w-full bg-orange-400 -rotate-1"></span>
               </span>
@@ -97,9 +99,8 @@ function Index() {
 
             {/* Subheading */}
             <p className="mx-auto mb-12 max-w-2xl text-xl font-medium text-gray-800 md:text-2xl">
-              Design conversational interview agents in 4 simple steps. Define knowledge,
-              generate questions, configure personality, and share. Your candidates
-              interact with human-like agents that speak, listen, and evaluate in real-time.
+              Design custom interview agents in 4 simple steps - define knowledge sources,
+              build questions, configure agent personality, and share with candidates.
             </p>
 
             {/* CTA Buttons */}
@@ -148,7 +149,7 @@ function Index() {
                 </h3>
                 <p className="text-lg text-gray-800 font-medium">
                   Choose from topics, URLs, web search, or upload documents.
-                  Our AI scrapes and understands the content to generate relevant questions.
+                  Humanly scrapes and understands the content to generate relevant questions.
                 </p>
               </div>
             </div>
