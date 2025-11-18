@@ -350,10 +350,12 @@ function InterviewPage() {
     // Move to next question (no feedback shown to candidate)
     setCurrentAnswer("");
     setSelectedOption(null);
-    setCurrentQuestionIndex(prev => prev + 1);
+    
+    const nextIndex = currentQuestionIndex + 1;
+    setCurrentQuestionIndex(nextIndex);
     
     // Immediately ask next question if available
-    if (currentQuestionIndex + 1 < questions.length) {
+    if (nextIndex < questions.length) {
       setTimeout(() => {
         askNextQuestion();
       }, 500);
@@ -401,10 +403,12 @@ function InterviewPage() {
       setFollowUpAnswer("");
       setCurrentAnswer("");
       setSelectedOption(null);
-      setCurrentQuestionIndex(prev => prev + 1);
+      
+      const nextIndex = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(nextIndex);
       
       // Immediately ask next question if available
-      if (currentQuestionIndex + 1 < questions.length) {
+      if (nextIndex < questions.length) {
         setTimeout(() => {
           askNextQuestion();
         }, 500);
