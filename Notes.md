@@ -17,3 +17,8 @@ mobile - nav options
 ts errors on build
 remove login redirect on logout
 Cursive
+2. remove alerts
+
+repeats question , speak answer for intro1, follow up feedback is okay for admin, not for candidate, attempt count ? view should show stats.  should be able to see response to intro q and follow up. transcript and my webcam feeed should be small bopxes
+
+login from other emails XXX

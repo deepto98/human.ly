@@ -286,39 +286,60 @@ function InterviewPage() {
     );
   }
 
-  // Permissions State
+  // Permissions State - Updated Layout
   if (state === "permissions") {
     return (
-      <div className="min-h-screen bg-amber-50 p-6 flex items-center justify-center">
-        <div className="relative w-full max-w-2xl">
-          <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
-          <div className="relative border-[4px] border-black bg-white p-8 text-center">
-            <div className="mb-6 mx-auto inline-block">
-              <div className="relative">
-                <div className="absolute -bottom-1 -right-1 h-full w-full bg-black"></div>
-                <div className="relative border-[3px] border-black bg-cyan-200 p-6">
-                  <Video className="h-16 w-16 mx-auto" />
-                </div>
+      <div className="min-h-screen bg-amber-50 p-6">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-6 lg:grid-cols-2 items-center min-h-[80vh]">
+            {/* Left: Ready to Start */}
+            <div className="relative">
+              <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+              <div className="relative border-[4px] border-black bg-white p-8">
+                <h2 className="mb-4 text-4xl font-black text-black">
+                  Ready to Start?
+                </h2>
+                <p className="mb-8 text-lg text-gray-700 font-medium">
+                  This interview requires camera and screen sharing access for recording purposes.
+                </p>
+
+                <button
+                  onClick={requestPermissions}
+                  className="relative w-full group"
+                >
+                  <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+                  <div className="relative flex items-center justify-center gap-2 border-[4px] border-black bg-orange-400 px-8 py-4 font-bold uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px]">
+                    <Video className="h-6 w-6" />
+                    Grant Camera & Screen Access
+                  </div>
+                </button>
               </div>
             </div>
 
-            <h2 className="mb-4 text-4xl font-black text-black">
-              Grant Permissions
-            </h2>
-            <p className="mb-8 text-lg text-gray-700 font-medium">
-              This interview requires camera and screen sharing access for recording purposes.
-            </p>
-
-            <button
-              onClick={requestPermissions}
-              className="relative w-full group"
-            >
-              <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
-              <div className="relative flex items-center justify-center gap-2 border-[4px] border-black bg-orange-400 px-8 py-4 font-bold uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px]">
-                <Video className="h-6 w-6" />
-                Grant Access
+            {/* Right: Preview boxes */}
+            <div className="space-y-4">
+              {/* Webcam Preview Placeholder */}
+              <div className="relative">
+                <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+                <div className="relative border-[4px] border-black bg-white p-4">
+                  <h3 className="mb-2 text-sm font-bold uppercase">Camera Preview</h3>
+                  <div className="aspect-video bg-gray-200 border-[2px] border-black flex items-center justify-center">
+                    <Video className="h-12 w-12 text-gray-400" />
+                  </div>
+                </div>
               </div>
-            </button>
+
+              {/* Screen Share Preview Placeholder */}
+              <div className="relative">
+                <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+                <div className="relative border-[4px] border-black bg-white p-4">
+                  <h3 className="mb-2 text-sm font-bold uppercase">Screen Share Preview</h3>
+                  <div className="aspect-video bg-gray-200 border-[2px] border-black flex items-center justify-center">
+                    <Monitor className="h-12 w-12 text-gray-400" />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
