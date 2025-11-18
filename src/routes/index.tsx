@@ -90,7 +90,7 @@ function Index() {
               <span className="relative inline-block">
                 {/* Small "interview" in handwriting style above the H */}
                 <span 
-                  className="absolute -top-6 md:-top-8 left-0 text-xl md:text-2xl text-orange-600"
+                  className="absolute -top-4 md:-top-5 left-0 text-xl md:text-2xl text-orange-600"
                   style={{ fontFamily: 'cursive' }}
                 >
                   interview
