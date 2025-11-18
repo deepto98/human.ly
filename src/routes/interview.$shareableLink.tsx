@@ -3,17 +3,17 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useConvexMutation, useConvexAction, convexQuery } from "@convex-dev/react-query";
 import { api } from "@cvx/_generated/api";
-import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
 import { Loader2, Video, Monitor, Mic, MicOff, Send } from "lucide-react";
 import { cn } from "@/utils/misc";
 import Webcam from "react-webcam";
+import RecordRTC from "recordrtc";
 
 export const Route = createFileRoute("/interview/$shareableLink")({
   component: InterviewPage,
 });
 
-type InterviewState = "setup" | "permissions" | "intro" | "active" | "completed";
+type InterviewState = "setup" | "permissions" | "active" | "completed";
 
 interface Question {
   _id: string;
@@ -33,7 +33,11 @@ function InterviewPage() {
   
   const startInterview = useConvexMutation(api.interviews.startInterview);
   const submitAnswer = useConvexAction(api.interviews.submitAnswer);
+  const submitIntro = useConvexMutation(api.interviews.submitIntro);
+  const submitFollowUpAnswer = useConvexMutation(api.interviews.submitFollowUpAnswer);
+  const generateFollowUp = useConvexAction(api.interviews.generateFollowUp);
   const completeInterview = useConvexMutation(api.interviews.completeInterview);
+  const uploadRecording = useConvexAction(api.interviews.uploadRecording);
   
   const [state, setState] = useState<InterviewState>("setup");
   const [candidateName, setCandidateName] = useState("");
@@ -45,18 +49,33 @@ function InterviewPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [followUpAnswer, setFollowUpAnswer] = useState("");
+  const [awaitingFollowUp, setAwaitingFollowUp] = useState(false);
+  const [followUpCount, setFollowUpCount] = useState(0);
+  const [currentFollowUpQuestion, setCurrentFollowUpQuestion] = useState<string | null>(null);
+  const [lastQuestionId, setLastQuestionId] = useState<string | null>(null);
   
   const [messages, setMessages] = useState<Array<{ sender: "agent" | "candidate"; text: string }>>([]);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [audioLevel, setAudioLevel] = useState(0);
   
   const webcamRef = useRef<Webcam>(null);
+  const screenVideoRef = useRef<HTMLVideoElement>(null);
+  const webcamVideoRef = useRef<HTMLVideoElement>(null);
   const [hasPermissions, setHasPermissions] = useState(false);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+  const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
+  const [webcamRecorder, setWebcamRecorder] = useState<RecordRTC | null>(null);
+  const [screenRecorder, setScreenRecorder] = useState<RecordRTC | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const recognitionRef = useRef<any>(null);
 
   const currentQuestion = questions[currentQuestionIndex];
+  const isIntroQuestion = currentQuestionIndex === -1;
 
-  // Request permissions
+  // Request permissions and show video feeds
   const requestPermissions = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -64,15 +83,61 @@ function InterviewPage() {
         audio: true,
       });
       
-      // Also request screen share
       const screenStream = await navigator.mediaDevices.getDisplayMedia({
         video: true,
-        audio: false,
+        audio: true,
       });
       
       setMediaStream(stream);
+      setScreenStream(screenStream);
       setHasPermissions(true);
-      setState("intro");
+
+      // Start recording
+      if (webcamVideoRef.current && screenVideoRef.current) {
+        webcamVideoRef.current.srcObject = stream;
+        screenVideoRef.current.srcObject = screenStream;
+        
+        // Start audio analysis for mic animation
+        const audioContext = new AudioContext();
+        const analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(analyser);
+        analyser.fftSize = 256;
+        
+        audioContextRef.current = audioContext;
+        analyserRef.current = analyser;
+        
+        // Start recording webcam
+        const webcamRec = new RecordRTC(stream, {
+          type: "video",
+          mimeType: "video/webm;codecs=vp8,opus",
+        });
+        webcamRec.startRecording();
+        setWebcamRecorder(webcamRec);
+        
+        // Start recording screen
+        const screenRec = new RecordRTC(screenStream, {
+          type: "video",
+          mimeType: "video/webm;codecs=vp8,opus",
+        });
+        screenRec.startRecording();
+        setScreenRecorder(screenRec);
+
+        // Monitor audio levels for mic animation
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        const updateAudioLevel = () => {
+          if (analyserRef.current) {
+            analyserRef.current.getByteFrequencyData(dataArray);
+            const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+            setAudioLevel(average);
+            requestAnimationFrame(updateAudioLevel);
+          }
+        };
+        updateAudioLevel();
+      }
+      
+      // Start interview immediately after permissions
+      await handleStartInterview();
     } catch (error) {
       console.error("Permission denied:", error);
       alert("Camera and screen sharing permissions are required for this interview.");
@@ -89,28 +154,54 @@ function InterviewPage() {
     }
   };
 
-  // Speech recognition for candidate
+  // Speech recognition for candidate with mic animation
   const startListening = () => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
       const recognition = new SpeechRecognition();
       
-      recognition.continuous = false;
-      recognition.interimResults = false;
+      recognition.continuous = true;
+      recognition.interimResults = true;
       
       recognition.onstart = () => setIsListening(true);
       recognition.onend = () => setIsListening(false);
       
       recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setCurrentAnswer(transcript);
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          }
+        }
+        if (finalTranscript) {
+          if (isIntroQuestion) {
+            setCandidateIntro(prev => prev + ' ' + finalTranscript);
+          } else if (awaitingFollowUp) {
+            setFollowUpAnswer(prev => prev + ' ' + finalTranscript);
+          } else {
+            setCurrentAnswer(prev => prev + ' ' + finalTranscript);
+          }
+        }
       };
       
+      recognition.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error);
+        setIsListening(false);
+      };
+      
+      recognitionRef.current = recognition;
       recognition.start();
     }
   };
 
-  // Start interview
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    }
+  };
+
+  // Start interview - create interview session and go directly to active state
   const handleStartInterview = async () => {
     if (!candidateName.trim() || !candidateEmail.trim()) {
       alert("Please enter your name and email");
@@ -126,6 +217,10 @@ function InterviewPage() {
     setInterviewId(result.interviewId as string);
     setQuestions(result.questions as Question[]);
     
+    // Go directly to active interview
+    setState("active");
+    setCurrentQuestionIndex(-1); // -1 means intro question
+    
     // Agent introduction
     const introMessage = `Hello ${candidateName}! I'm ${agentData?.name}, and I'll be conducting your interview today. Before we begin with the questions, please tell me a bit about yourself.`;
     setMessages([{ sender: "agent", text: introMessage }]);
@@ -133,28 +228,41 @@ function InterviewPage() {
   };
 
   // Submit candidate intro
-  const handleSubmitIntro = () => {
-    if (!candidateIntro.trim()) return;
+  const handleSubmitIntro = async () => {
+    if (!candidateIntro.trim() || !interviewId) return;
     
     setMessages(prev => [...prev, { sender: "candidate", text: candidateIntro }]);
+    
+    // Save intro to backend
+    await submitIntro({
+      interviewId: interviewId as any,
+      candidateIntro,
+    });
     
     // Agent acknowledges and starts first question
     const acknowledgeText = "Thank you for sharing! Let's begin with the first question.";
     setMessages(prev => [...prev, { sender: "agent", text: acknowledgeText }]);
     speak(acknowledgeText);
     
-    setState("active");
-    askNextQuestion();
+    // Move to first question
+    setCurrentQuestionIndex(0);
+    setTimeout(() => {
+      askNextQuestion();
+    }, 2000);
   };
 
   // Ask next question
   const askNextQuestion = () => {
-    if (currentQuestionIndex < questions.length) {
+    if (currentQuestionIndex < questions.length && currentQuestionIndex >= 0) {
       const q = questions[currentQuestionIndex];
       const questionText = `Question ${currentQuestionIndex + 1}: ${q.questionText}`;
       setMessages(prev => [...prev, { sender: "agent", text: questionText }]);
       speak(questionText);
-    } else {
+      setLastQuestionId(q._id);
+      setFollowUpCount(0);
+      setAwaitingFollowUp(false);
+      setCurrentFollowUpQuestion(null);
+    } else if (currentQuestionIndex >= questions.length) {
       // Interview complete
       finishInterview();
     }
@@ -162,7 +270,7 @@ function InterviewPage() {
 
   // Submit answer
   const handleSubmitAnswer = async () => {
-    if (!interviewId || !currentQuestion) return;
+    if (!interviewId || !currentQuestion || awaitingFollowUp) return;
 
     const answer = currentQuestion.type === "mcq" 
       ? selectedOption?.toString() || ""
@@ -177,19 +285,33 @@ function InterviewPage() {
       : answer;
     setMessages(prev => [...prev, { sender: "candidate", text: answerText }]);
 
-    // Evaluate answer
+    // Evaluate answer (don't show correct/incorrect to candidate)
     const result = await submitAnswer({
       interviewId: interviewId as any,
       questionId: currentQuestion._id as any,
       candidateAnswer: answer,
     });
 
-    // Agent feedback
-    const feedbackText = result.evaluationFeedback || "Noted. Let's move on.";
-    setMessages(prev => [...prev, { sender: "agent", text: feedbackText }]);
-    speak(feedbackText);
+    // For subjective questions, check if we should ask follow-up
+    if (currentQuestion.type === "subjective" && agentData?.enableFollowUps && 
+        followUpCount < (agentData.maxFollowUps || 2)) {
+      
+      // Generate interactive follow-up
+      const followUp = await generateFollowUp({
+        questionId: currentQuestion._id as any,
+        candidateAnswer: answer,
+      });
 
-    // Reset and move to next
+      setCurrentFollowUpQuestion(followUp as string);
+      setMessages(prev => [...prev, { sender: "agent", text: followUp as string }]);
+      speak(followUp as string);
+      setAwaitingFollowUp(true);
+      setFollowUpCount(prev => prev + 1);
+      setFollowUpAnswer("");
+      return;
+    }
+
+    // Move to next question (no feedback shown to candidate)
     setCurrentAnswer("");
     setSelectedOption(null);
     setCurrentQuestionIndex(prev => prev + 1);
@@ -200,10 +322,56 @@ function InterviewPage() {
       } else {
         finishInterview();
       }
-    }, 2000);
+    }, 1000);
   };
 
-  // Finish interview
+  // Submit follow-up answer
+  const handleSubmitFollowUp = async () => {
+    if (!followUpAnswer.trim() || !lastQuestionId || !interviewId || !currentFollowUpQuestion) return;
+
+    setMessages(prev => [...prev, { sender: "candidate", text: followUpAnswer }]);
+
+    // Save follow-up question and answer
+    await submitFollowUpAnswer({
+      interviewId: interviewId as any,
+      questionId: lastQuestionId as any,
+      followUpQuestion: currentFollowUpQuestion,
+      followUpAnswer: followUpAnswer,
+    });
+
+    // Check if more follow-ups or move on
+    if (agentData?.enableFollowUps && followUpCount < (agentData.maxFollowUps || 2)) {
+      // Generate another follow-up
+      const followUp = await generateFollowUp({
+        questionId: lastQuestionId as any,
+        candidateAnswer: followUpAnswer,
+      });
+
+      setCurrentFollowUpQuestion(followUp as string);
+      setMessages(prev => [...prev, { sender: "agent", text: followUp as string }]);
+      speak(followUp as string);
+      setFollowUpAnswer("");
+      setFollowUpCount(prev => prev + 1);
+    } else {
+      // Move to next question
+      setAwaitingFollowUp(false);
+      setCurrentFollowUpQuestion(null);
+      setFollowUpAnswer("");
+      setCurrentAnswer("");
+      setSelectedOption(null);
+      setCurrentQuestionIndex(prev => prev + 1);
+      
+      setTimeout(() => {
+        if (currentQuestionIndex + 1 < questions.length) {
+          askNextQuestion();
+        } else {
+          finishInterview();
+        }
+      }, 1000);
+    }
+  };
+
+  // Finish interview and upload recordings
   const finishInterview = async () => {
     const closingText = agentData?.conversationalStyle === "casual"
       ? "Great job! That's all the questions I have for you today. Thanks for your time!"
@@ -211,6 +379,42 @@ function InterviewPage() {
     
     setMessages(prev => [...prev, { sender: "agent", text: closingText }]);
     speak(closingText);
+
+    // Stop recordings and upload
+    if (webcamRecorder && screenRecorder && interviewId) {
+      webcamRecorder.stopRecording(async () => {
+        const webcamBlob = webcamRecorder.getBlob();
+        const webcamBuffer = await webcamBlob.arrayBuffer();
+        
+        screenRecorder.stopRecording(async () => {
+          const screenBlob = screenRecorder.getBlob();
+          const screenBuffer = await screenBlob.arrayBuffer();
+          
+          // Combine recordings or upload separately
+          // For now, upload webcam recording
+          try {
+            await uploadRecording({
+              interviewId: interviewId as any,
+              videoData: Array.from(new Uint8Array(webcamBuffer)),
+              mimeType: "video/webm",
+            });
+          } catch (error) {
+            console.error("Failed to upload recording:", error);
+          }
+        });
+      });
+    }
+
+    // Stop media streams
+    if (mediaStream) {
+      mediaStream.getTracks().forEach(track => track.stop());
+    }
+    if (screenStream) {
+      screenStream.getTracks().forEach(track => track.stop());
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+    }
 
     if (interviewId) {
       await completeInterview({
@@ -220,6 +424,24 @@ function InterviewPage() {
 
     setState("completed");
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+      }
+      if (screenStream) {
+        screenStream.getTracks().forEach(track => track.stop());
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
 
   if (!agentData) {
     return (
@@ -286,7 +508,7 @@ function InterviewPage() {
     );
   }
 
-  // Permissions State - Updated Layout
+  // Permissions State - With live video feeds
   if (state === "permissions") {
     return (
       <div className="min-h-screen bg-amber-50 p-6">
@@ -318,143 +540,54 @@ function InterviewPage() {
 
             {/* Right: Preview boxes */}
             <div className="space-y-4">
-              {/* Webcam Preview Placeholder */}
+              {/* Webcam Preview */}
               <div className="relative">
                 <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
                 <div className="relative border-[4px] border-black bg-white p-4">
                   <h3 className="mb-2 text-sm font-bold uppercase">Camera Preview</h3>
-                  <div className="aspect-video bg-gray-200 border-[2px] border-black flex items-center justify-center">
-                    <Video className="h-12 w-12 text-gray-400" />
-                  </div>
+                  <video
+                    ref={webcamVideoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="aspect-video w-full border-[2px] border-black bg-gray-200"
+                  />
                 </div>
               </div>
 
-              {/* Screen Share Preview Placeholder */}
+              {/* Screen Share Preview */}
               <div className="relative">
                 <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
                 <div className="relative border-[4px] border-black bg-white p-4">
                   <h3 className="mb-2 text-sm font-bold uppercase">Screen Share Preview</h3>
-                  <div className="aspect-video bg-gray-200 border-[2px] border-black flex items-center justify-center">
-                    <Monitor className="h-12 w-12 text-gray-400" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Intro State - Ask candidate for introduction
-  if (state === "intro") {
-    return (
-      <div className="min-h-screen bg-amber-50 p-6">
-        <div className="mx-auto max-w-6xl">
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Webcam Preview */}
-            <div className="relative">
-              <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
-              <div className="relative border-[4px] border-black bg-white p-4">
-                <h3 className="mb-2 text-lg font-bold">Your Camera</h3>
-                <Webcam
-                  ref={webcamRef}
-                  audio={false}
-                  className="w-full border-[2px] border-black"
-                />
-              </div>
-            </div>
-
-            {/* Interview Start */}
-            <div className="relative">
-              <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
-              <div className="relative border-[4px] border-black bg-white p-8">
-                <h2 className="mb-4 text-3xl font-black">Ready to Start?</h2>
-                <p className="mb-6 text-lg text-gray-700 font-medium">
-                  Click below to begin your interview with {agentData.name}.
-                </p>
-
-                <button
-                  onClick={handleStartInterview}
-                  disabled={startInterview.isPending}
-                  className="relative w-full group"
-                >
-                  <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
-                  <div className="relative flex items-center justify-center gap-2 border-[4px] border-black bg-orange-400 px-8 py-4 font-bold uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px]">
-                    {startInterview.isPending ? (
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                    ) : (
-                      "Start Interview"
-                    )}
-                  </div>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Chat Messages */}
-          {messages.length > 0 && (
-            <div className="relative mt-6">
-              <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
-              <div className="relative border-[4px] border-black bg-white p-6">
-                <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
-                  {messages.map((msg, idx) => (
-                    <div
-                      key={idx}
-                      className={cn(
-                        "p-3 border-[2px] border-black font-medium",
-                        msg.sender === "agent" ? "bg-cyan-100" : "bg-lime-100"
-                      )}
-                    >
-                      <div className="text-xs font-bold uppercase mb-1">
-                        {msg.sender === "agent" ? agentData.name : "You"}
-                      </div>
-                      {msg.text}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Intro Input */}
-                <div className="space-y-3">
-                  <Input
-                    value={candidateIntro}
-                    onChange={(e) => setCandidateIntro(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && handleSubmitIntro()}
-                    placeholder="Tell us about yourself..."
-                    className="border-[3px] border-black p-4 text-lg"
+                  <video
+                    ref={screenVideoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="aspect-video w-full border-[2px] border-black bg-gray-200"
                   />
-                  <button
-                    onClick={handleSubmitIntro}
-                    disabled={!candidateIntro.trim()}
-                    className="relative w-full group"
-                  >
-                    <div className="absolute -bottom-1 -right-1 h-full w-full bg-black"></div>
-                    <div className="relative flex items-center justify-center gap-2 border-[3px] border-black bg-lime-300 px-6 py-3 font-bold uppercase transition-all hover:translate-x-[1px] hover:translate-y-[1px]">
-                      <Send className="h-5 w-5" />
-                      Submit
-                    </div>
-                  </button>
                 </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
     );
   }
 
-  // Active Interview State
+  // Active Interview State - Redesigned Layout
   if (state === "active") {
     return (
       <div className="min-h-screen bg-amber-50 p-6">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-7xl">
           {/* Progress */}
           <div className="mb-6 relative">
             <div className="absolute -bottom-1 -right-1 h-full w-full bg-black"></div>
             <div className="relative border-[3px] border-black bg-white p-4">
               <div className="flex items-center justify-between">
                 <span className="font-bold">
-                  Question {currentQuestionIndex + 1} of {questions.length}
+                  {isIntroQuestion ? "Introduction" : `Question ${currentQuestionIndex + 1} of ${questions.length}`}
                 </span>
                 <span className="font-bold">
                   Score: {/* Will track score */} / {agentData.totalMarks}
@@ -463,26 +596,222 @@ function InterviewPage() {
             </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-3">
-            {/* Avatar & Webcam */}
-            <div className="space-y-4">
-              {/* Agent Avatar */}
-              <div className="relative">
-                <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
-                <div className="relative border-[4px] border-black bg-gradient-to-br from-orange-300 to-orange-400 p-8 text-center">
-                  <div className="mb-3 mx-auto inline-block">
-                    <div className="h-24 w-24 rounded-full border-[4px] border-black bg-white flex items-center justify-center">
-                      <span className="text-4xl">👤</span>
+          <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+            {/* Left: Agent Visualization (Large) */}
+            <div className="relative">
+              <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+              <div className="relative border-[4px] border-black bg-gradient-to-br from-orange-300 to-orange-400 p-8 text-center min-h-[500px] flex flex-col items-center justify-center">
+                <div className="mb-6">
+                  <div className="h-32 w-32 rounded-full border-[4px] border-black bg-white flex items-center justify-center">
+                    <span className="text-6xl">👤</span>
+                  </div>
+                </div>
+                <h3 className="text-3xl font-black mb-2">{agentData.name}</h3>
+                <p className="text-lg font-bold uppercase">
+                  {isSpeaking ? "🎤 Speaking..." : "Listening..."}
+                </p>
+                
+                {/* Current Question Display (Only current question shown) */}
+                {!isIntroQuestion && currentQuestion && (
+                  <div className="mt-8 w-full max-w-2xl">
+                    <div className="relative border-[3px] border-black bg-white p-6">
+                      <h4 className="text-xl font-black mb-4">Current Question</h4>
+                      <p className="text-lg font-medium mb-4">{currentQuestion.questionText}</p>
+                      
+                      {currentQuestion.type === "mcq" && currentQuestion.options && (
+                        <div className="space-y-2">
+                          {currentQuestion.options.map((option, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => setSelectedOption(idx)}
+                              className={cn(
+                                "w-full text-left p-3 border-[2px] border-black font-medium transition-all",
+                                selectedOption === idx ? "bg-orange-300" : "bg-gray-50 hover:bg-gray-100"
+                              )}
+                            >
+                              <span className="font-bold mr-2">{String.fromCharCode(65 + idx)}.</span>
+                              {option}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {currentQuestion.type === "subjective" && (
+                        <div className="space-y-3">
+                          <textarea
+                            value={currentAnswer}
+                            onChange={(e) => setCurrentAnswer(e.target.value)}
+                            placeholder="Type your answer here..."
+                            rows={4}
+                            className="w-full border-[2px] border-black p-3 text-base resize-none bg-white text-black"
+                          />
+                          <button
+                            onClick={isListening ? stopListening : startListening}
+                            className={cn(
+                              "relative flex items-center justify-center gap-2 border-[2px] border-black px-4 py-2 font-bold uppercase w-full",
+                              isListening ? "bg-red-300" : "bg-cyan-200 hover:bg-cyan-300"
+                            )}
+                          >
+                            {isListening ? (
+                              <>
+                                <MicOff className="h-4 w-4" />
+                                Stop Recording
+                              </>
+                            ) : (
+                              <>
+                                <Mic className="h-4 w-4" />
+                                Speak Answer
+                              </>
+                            )}
+                          </button>
+                          {isListening && (
+                            <div className="flex items-center gap-2 justify-center">
+                              <Mic className={cn(
+                                "h-6 w-6 transition-all",
+                                audioLevel > 50 ? "animate-pulse" : "",
+                                audioLevel > 100 ? "animate-bounce" : ""
+                              )} style={{
+                                transform: `scale(${1 + audioLevel / 200})`,
+                                filter: `drop-shadow(0 0 ${audioLevel / 10}px rgba(239, 68, 68, 0.5))`
+                              }} />
+                              <span className="text-sm font-medium">Listening...</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {awaitingFollowUp && currentFollowUpQuestion && (
+                        <div className="mt-4 pt-4 border-t-[2px] border-black">
+                          <p className="text-lg font-medium mb-3">{currentFollowUpQuestion}</p>
+                          <textarea
+                            value={followUpAnswer}
+                            onChange={(e) => setFollowUpAnswer(e.target.value)}
+                            placeholder="Your response..."
+                            rows={3}
+                            className="w-full border-[2px] border-black p-3 text-base resize-none bg-white text-black mb-2"
+                          />
+                          <button
+                            onClick={handleSubmitFollowUp}
+                            disabled={!followUpAnswer.trim()}
+                            className="relative w-full"
+                          >
+                            <div className="absolute -bottom-1 -right-1 h-full w-full bg-black"></div>
+                            <div className="relative flex items-center justify-center gap-2 border-[2px] border-black bg-lime-300 px-4 py-2 font-bold uppercase">
+                              Submit Follow-up
+                            </div>
+                          </button>
+                        </div>
+                      )}
+                      
+                      {!awaitingFollowUp && (
+                        <button
+                          onClick={isIntroQuestion ? handleSubmitIntro : handleSubmitAnswer}
+                          disabled={
+                            isIntroQuestion ? !candidateIntro.trim() :
+                            (currentQuestion.type === "mcq" && selectedOption === null) ||
+                            (currentQuestion.type === "subjective" && !currentAnswer.trim())
+                          }
+                          className="relative w-full mt-4"
+                        >
+                          <div className="absolute -bottom-1 -right-1 h-full w-full bg-black"></div>
+                          <div className="relative flex items-center justify-center gap-2 border-[2px] border-black bg-orange-400 px-6 py-3 font-bold uppercase">
+                            <Send className="h-5 w-5" />
+                            {isIntroQuestion ? "Submit Introduction" : "Submit Answer"}
+                          </div>
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <h3 className="text-2xl font-black">{agentData.name}</h3>
-                  <p className="text-sm font-bold uppercase mt-1">
-                    {isSpeaking ? "🎤 Speaking..." : "Listening..."}
-                  </p>
+                )}
+                
+                {/* Intro Question Display */}
+                {isIntroQuestion && (
+                  <div className="mt-8 w-full max-w-2xl">
+                    <div className="relative border-[3px] border-black bg-white p-6">
+                      <h4 className="text-xl font-black mb-4">Tell us about yourself</h4>
+                      <textarea
+                        value={candidateIntro}
+                        onChange={(e) => setCandidateIntro(e.target.value)}
+                        placeholder="Type or speak your introduction..."
+                        rows={4}
+                        className="w-full border-[2px] border-black p-3 text-base resize-none bg-white text-black mb-2"
+                      />
+                      <button
+                        onClick={isListening ? stopListening : startListening}
+                        className={cn(
+                          "relative flex items-center justify-center gap-2 border-[2px] border-black px-4 py-2 font-bold uppercase w-full mb-2",
+                          isListening ? "bg-red-300" : "bg-cyan-200 hover:bg-cyan-300"
+                        )}
+                      >
+                        {isListening ? (
+                          <>
+                            <MicOff className="h-4 w-4" />
+                            Stop Recording
+                          </>
+                        ) : (
+                          <>
+                            <Mic className="h-4 w-4" />
+                            Speak Introduction
+                          </>
+                        )}
+                      </button>
+                      {isListening && (
+                        <div className="flex items-center gap-2 justify-center mb-2">
+                          <Mic className={cn(
+                            "h-6 w-6 transition-all",
+                            audioLevel > 50 ? "animate-pulse" : "",
+                            audioLevel > 100 ? "animate-bounce" : ""
+                          )} style={{
+                            transform: `scale(${1 + audioLevel / 200})`,
+                            filter: `drop-shadow(0 0 ${audioLevel / 10}px rgba(239, 68, 68, 0.5))`
+                          }} />
+                          <span className="text-sm font-medium">Listening...</span>
+                        </div>
+                      )}
+                      <button
+                        onClick={handleSubmitIntro}
+                        disabled={!candidateIntro.trim()}
+                        className="relative w-full"
+                      >
+                        <div className="absolute -bottom-1 -right-1 h-full w-full bg-black"></div>
+                        <div className="relative flex items-center justify-center gap-2 border-[2px] border-black bg-orange-400 px-6 py-3 font-bold uppercase">
+                          <Send className="h-5 w-5" />
+                          Submit Introduction
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right: Chat Transcript (Small YouTube-style) & Webcam */}
+            <div className="space-y-4">
+              {/* Chat Transcript */}
+              <div className="relative">
+                <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+                <div className="relative border-[4px] border-black bg-white p-4">
+                  <h3 className="mb-2 text-sm font-bold uppercase">Interview Chat</h3>
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                    {messages.map((msg, idx) => (
+                      <div
+                        key={idx}
+                        className={cn(
+                          "p-2 border-[2px] border-black text-sm font-medium",
+                          msg.sender === "agent" ? "bg-cyan-100" : "bg-lime-100"
+                        )}
+                      >
+                        <div className="text-xs font-bold uppercase mb-1">
+                          {msg.sender === "agent" ? agentData.name : "You"}
+                        </div>
+                        <div className="text-xs">{msg.text}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              {/* Webcam */}
+              {/* Webcam Feed */}
               <div className="relative">
                 <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
                 <div className="relative border-[4px] border-black bg-white p-2">
@@ -491,103 +820,9 @@ function InterviewPage() {
                     audio={false}
                     className="w-full border-[2px] border-black"
                   />
-                  <p className="mt-2 text-xs font-bold text-center uppercase">Your Camera</p>
+                  <p className="mt-1 text-xs font-bold text-center uppercase">Your Camera</p>
                 </div>
               </div>
-            </div>
-
-            {/* Chat & Question Area */}
-            <div className="lg:col-span-2 space-y-4">
-              {/* Chat Messages */}
-              <div className="relative">
-                <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
-                <div className="relative border-[4px] border-black bg-white p-6">
-                  <h3 className="mb-4 text-xl font-bold">Interview Chat</h3>
-                  <div className="space-y-3 mb-4 max-h-96 overflow-y-auto">
-                    {messages.map((msg, idx) => (
-                      <div
-                        key={idx}
-                        className={cn(
-                          "p-3 border-[2px] border-black font-medium",
-                          msg.sender === "agent" ? "bg-cyan-100" : "bg-lime-100"
-                        )}
-                      >
-                        <div className="text-xs font-bold uppercase mb-1">
-                          {msg.sender === "agent" ? agentData.name : "You"}
-                        </div>
-                        {msg.text}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Answer Input */}
-              {currentQuestion && (
-                <div className="relative">
-                  <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
-                  <div className="relative border-[4px] border-black bg-white p-6">
-                    <h3 className="mb-4 text-lg font-bold uppercase">Your Answer</h3>
-
-                    {currentQuestion.type === "mcq" ? (
-                      <div className="space-y-2 mb-4">
-                        {currentQuestion.options?.map((option, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => setSelectedOption(idx)}
-                            className={cn(
-                              "w-full text-left p-4 border-[3px] border-black font-medium transition-all",
-                              selectedOption === idx ? "bg-orange-300" : "bg-white hover:bg-gray-100"
-                            )}
-                          >
-                            <span className="font-bold mr-2">{String.fromCharCode(65 + idx)}.</span>
-                            {option}
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="space-y-3 mb-4">
-                        <textarea
-                          value={currentAnswer}
-                          onChange={(e) => setCurrentAnswer(e.target.value)}
-                          placeholder="Type your answer here..."
-                          rows={6}
-                          className="w-full border-[3px] border-black p-4 text-lg resize-none bg-white text-black"
-                        />
-                        <button
-                          onClick={startListening}
-                          disabled={isListening}
-                          className="relative"
-                        >
-                          <div className="absolute -bottom-1 -right-1 h-full w-full bg-black"></div>
-                          <div className={cn(
-                            "relative flex items-center gap-2 border-[3px] border-black px-4 py-2 font-bold uppercase",
-                            isListening ? "bg-red-300" : "bg-cyan-200 hover:bg-cyan-300"
-                          )}>
-                            {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                            {isListening ? "Listening..." : "Speak Answer"}
-                          </div>
-                        </button>
-                      </div>
-                    )}
-
-                    <button
-                      onClick={handleSubmitAnswer}
-                      disabled={
-                        (currentQuestion.type === "mcq" && selectedOption === null) ||
-                        (currentQuestion.type === "subjective" && !currentAnswer.trim())
-                      }
-                      className="relative w-full group"
-                    >
-                      <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
-                      <div className="relative flex items-center justify-center gap-2 border-[4px] border-black bg-orange-400 px-8 py-4 font-bold uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px]">
-                        <Send className="h-6 w-6" />
-                        Submit Answer
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -633,4 +868,3 @@ function InterviewPage() {
 
   return null;
 }
-

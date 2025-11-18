@@ -105,14 +105,27 @@ function AttemptDetailPage() {
           </div>
         </div>
 
-        {/* Recording */}
+        {/* Candidate Introduction */}
+        {interview.candidateIntro && (
+          <div className="relative mb-8">
+            <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+            <div className="relative border-[4px] border-black bg-white p-6">
+              <h2 className="mb-4 text-2xl font-black">Candidate Introduction</h2>
+              <div className="border-[3px] border-black bg-lime-50 p-4 font-medium">
+                {interview.candidateIntro}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Recordings */}
         {interview.recordingUrl && (
           <div className="relative mb-8">
             <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
             <div className="relative border-[4px] border-black bg-white p-6">
               <h2 className="mb-4 text-2xl font-black flex items-center gap-2">
                 <Video className="h-6 w-6" />
-                Interview Recording
+                Interview Recordings
               </h2>
               <div className="border-[3px] border-black">
                 <video
@@ -176,8 +189,8 @@ function AttemptDetailPage() {
                         </div>
 
                         {/* Evaluation */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
+                        <div className="mb-3">
+                          <div className="flex items-center gap-3 mb-3">
                             {response.isCorrect !== undefined && (
                               <div className={cn(
                                 "flex items-center gap-2 border-[2px] border-black px-3 py-1 font-bold",
@@ -201,9 +214,15 @@ function AttemptDetailPage() {
                             </div>
                           </div>
 
-                          {response.evaluationFeedback && (
-                            <div className="text-sm italic text-gray-700">
-                              "{response.evaluationFeedback}"
+                          {/* Evaluation Feedback (Critique) - Only for subjective questions */}
+                          {question.type === "subjective" && response.evaluationFeedback && (
+                            <div className="mb-3">
+                              <div className="text-xs font-bold uppercase text-gray-600 mb-1">
+                                AI Evaluator's Critique:
+                              </div>
+                              <div className="border-[2px] border-black bg-cyan-50 p-3 text-sm font-medium">
+                                {response.evaluationFeedback}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -211,15 +230,23 @@ function AttemptDetailPage() {
                         {/* Follow-ups if any */}
                         {response.followUpQuestions && response.followUpQuestions.length > 0 && (
                           <div className="mt-4 pt-4 border-t-[2px] border-black">
-                            <div className="text-xs font-bold uppercase text-gray-600 mb-2">
-                              Follow-up Questions:
+                            <div className="text-xs font-bold uppercase text-gray-600 mb-3">
+                              Follow-up Interaction:
                             </div>
                             {response.followUpQuestions.map((followUp, fIdx) => (
-                              <div key={fIdx} className="mb-2 space-y-1">
-                                <div className="text-sm font-medium">→ {followUp}</div>
+                              <div key={fIdx} className="mb-4 space-y-2">
+                                <div className="border-[2px] border-black bg-cyan-100 p-3">
+                                  <div className="text-xs font-bold uppercase mb-1">
+                                    Agent's Follow-up Question:
+                                  </div>
+                                  <div className="text-sm font-medium">{followUp}</div>
+                                </div>
                                 {response.followUpAnswers?.[fIdx] && (
-                                  <div className="ml-4 text-sm text-gray-700">
-                                    {response.followUpAnswers[fIdx]}
+                                  <div className="border-[2px] border-black bg-lime-100 p-3 ml-4">
+                                    <div className="text-xs font-bold uppercase mb-1">
+                                      Candidate's Response:
+                                    </div>
+                                    <div className="text-sm font-medium">{response.followUpAnswers[fIdx]}</div>
                                   </div>
                                 )}
                               </div>

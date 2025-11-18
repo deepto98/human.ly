@@ -202,6 +202,7 @@ const schema = defineSchema({
     candidateName: v.string(),
     candidateEmail: v.string(),
     candidateUserId: v.optional(v.id("users")), // If candidate is logged in
+    candidateIntro: v.optional(v.string()), // Candidate's introduction
     status: interviewStatusValidator,
     totalScore: v.number(),
     maxScore: v.number(),

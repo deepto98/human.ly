@@ -5,7 +5,7 @@
 import { v } from "convex/values";
 import { action, mutation, query } from "./_generated/server";
 import { api } from "./_generated/api";
-import { evaluateSubjectiveAnswer, generateFollowUpQuestion } from "./lib/openai";
+import { evaluateSubjectiveAnswer, generateFollowUpQuestion, getLLM } from "./lib/openai";
 
 /**
  * Start a new interview session
@@ -57,6 +57,7 @@ export const startInterview = mutation({
 
 /**
  * Submit an answer to a question
+ * Returns generic response to candidate (doesn't expose correct/incorrect)
  */
 export const submitAnswer = action({
   args: {
@@ -65,9 +66,7 @@ export const submitAnswer = action({
     candidateAnswer: v.string(),
   },
   handler: async (ctx, args): Promise<{
-    score: number;
-    evaluationFeedback: string;
-    isCorrect?: boolean;
+    acknowledged: boolean;
   }> => {
     const question = await ctx.runQuery(api.questions.getQuestion, {
       questionId: args.questionId,
@@ -86,7 +85,7 @@ export const submitAnswer = action({
       const selectedOption = parseInt(args.candidateAnswer);
       isCorrect = selectedOption === question.correctOption;
       score = isCorrect ? question.marks : 0;
-      evaluationFeedback = isCorrect ? "Correct!" : "Incorrect";
+      evaluationFeedback = `Answer evaluated: ${isCorrect ? "Correct" : "Incorrect"}`;
     }
     
     // Evaluate Subjective
@@ -98,10 +97,10 @@ export const submitAnswer = action({
         question.marks
       );
       score = evaluation.score;
-      evaluationFeedback = evaluation.feedback;
+      evaluationFeedback = evaluation.feedback; // For admin only
     }
 
-    // Store response
+    // Store response (with full evaluation details for admin)
     await ctx.runMutation(api.interviews.createResponse, {
       interviewId: args.interviewId,
       questionId: args.questionId,
@@ -117,16 +116,16 @@ export const submitAnswer = action({
       scoreToAdd: score,
     });
 
+    // Return generic acknowledgment (don't expose correct/incorrect to candidate)
     return {
-      score,
-      evaluationFeedback,
-      isCorrect: question.type === "mcq" ? isCorrect : undefined,
+      acknowledged: true,
     };
   },
 });
 
 /**
- * Generate follow-up question
+ * Generate interactive follow-up question
+ * Asks candidate what they missed or need to clarify
  */
 export const generateFollowUp = action({
   args: {
@@ -142,13 +141,185 @@ export const generateFollowUp = action({
       throw new Error("Invalid question for follow-up");
     }
 
-    const followUp = await generateFollowUpQuestion(
+    // Get evaluation to see what was missed
+    const evaluation = await evaluateSubjectiveAnswer(
       question.questionText,
+      question.keyPoints || [],
       args.candidateAnswer,
-      question.questionText
+      question.marks
     );
 
-    return followUp;
+    // Generate interactive follow-up based on missed points
+    const llm = getLLM(0.8);
+    const missedPointsText = evaluation.missedPoints && evaluation.missedPoints.length > 0
+      ? evaluation.missedPoints.join(", ")
+      : "some key aspects";
+
+    const prompt = `You are conducting an interview. The candidate answered a subjective question, but missed some important points. 
+
+Original Question: ${question.questionText}
+
+Candidate's Answer:
+"""
+${args.candidateAnswer}
+"""
+
+Key points that were missed or not fully covered:
+${missedPointsText}
+
+Generate ONE interactive, conversational follow-up question that:
+- Asks the candidate what they might have missed in their first response
+- Encourages them to think about additional aspects they haven't covered
+- Is friendly and helpful, not confrontational
+- Guides them to cover the missed points without directly stating them
+- Feels natural and conversational
+
+Return ONLY the follow-up question, nothing else.`;
+
+    try {
+      const response = await llm.invoke(prompt);
+      return (response.content as string).trim().replace(/^["']|["']$/g, "");
+    } catch (error) {
+      console.error("Error generating interactive follow-up:", error);
+      return "Is there anything else you'd like to add to your answer? Perhaps some additional aspects we haven't covered yet?";
+    }
+  },
+});
+
+/**
+ * Submit candidate introduction
+ */
+export const submitIntro = mutation({
+  args: {
+    interviewId: v.id("interviews"),
+    candidateIntro: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.interviewId, {
+      candidateIntro: args.candidateIntro,
+    });
+    return { success: true };
+  },
+});
+
+/**
+ * Submit follow-up answer for a question
+ */
+export const submitFollowUpAnswer = mutation({
+  args: {
+    interviewId: v.id("interviews"),
+    questionId: v.id("questions"),
+    followUpQuestion: v.string(),
+    followUpAnswer: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Find existing response
+    const existing = await ctx.db
+      .query("interviewResponses")
+      .withIndex("interviewId_questionId", (q) =>
+        q.eq("interviewId", args.interviewId).eq("questionId", args.questionId)
+      )
+      .first();
+
+    if (existing) {
+      // Update with follow-up question and answer
+      const currentFollowUps = existing.followUpQuestions || [];
+      const currentFollowUpAnswers = existing.followUpAnswers || [];
+      
+      await ctx.db.patch(existing._id, {
+        followUpQuestions: [...currentFollowUps, args.followUpQuestion],
+        followUpAnswers: [...currentFollowUpAnswers, args.followUpAnswer],
+      });
+      return existing._id;
+    }
+
+    // If no existing response, create one
+    const responseId = await ctx.db.insert("interviewResponses", {
+      interviewId: args.interviewId,
+      questionId: args.questionId,
+      candidateAnswer: "", // Will be set by main answer
+      score: 0,
+      followUpQuestions: [args.followUpQuestion],
+      followUpAnswers: [args.followUpAnswer],
+      answeredAt: Date.now(),
+    });
+
+    return responseId;
+  },
+});
+
+/**
+ * Upload interview recording to R2
+ */
+export const uploadRecording = action({
+  args: {
+    interviewId: v.id("interviews"),
+    videoData: v.array(v.number()),
+    mimeType: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { uploadRecording } = await import("./lib/r2");
+    
+    const videoBuffer = new Uint8Array(args.videoData);
+    const result = await uploadRecording(args.interviewId, videoBuffer, args.mimeType);
+
+    // Update interview with recording URL
+    await ctx.runMutation(api.interviews.updateRecordingUrl, {
+      interviewId: args.interviewId,
+      recordingUrl: result.publicUrl || result.url,
+    });
+
+    // Also create recording metadata entry
+    await ctx.runMutation(api.interviews.createRecordingMetadata, {
+      interviewId: args.interviewId,
+      r2Key: result.key,
+      r2Url: result.url,
+      publicUrl: result.publicUrl,
+      fileSize: result.fileSize,
+      mimeType: args.mimeType,
+    });
+
+    return result;
+  },
+});
+
+/**
+ * Update interview recording URL (internal)
+ */
+export const updateRecordingUrl = mutation({
+  args: {
+    interviewId: v.id("interviews"),
+    recordingUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.interviewId, {
+      recordingUrl: args.recordingUrl,
+    });
+  },
+});
+
+/**
+ * Create recording metadata (internal)
+ */
+export const createRecordingMetadata = mutation({
+  args: {
+    interviewId: v.id("interviews"),
+    r2Key: v.string(),
+    r2Url: v.string(),
+    publicUrl: v.optional(v.string()),
+    fileSize: v.number(),
+    mimeType: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert("recordings", {
+      interviewId: args.interviewId,
+      r2Key: args.r2Key,
+      r2Url: args.r2Url,
+      publicUrl: args.publicUrl,
+      fileSize: args.fileSize,
+      mimeType: args.mimeType,
+      uploadedAt: Date.now(),
+    });
   },
 });
 
@@ -187,6 +358,29 @@ export const createResponse = mutation({
     followUpAnswers: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
+    // Check if response already exists for this question (for follow-ups)
+    const existing = await ctx.db
+      .query("interviewResponses")
+      .withIndex("interviewId_questionId", (q) =>
+        q.eq("interviewId", args.interviewId).eq("questionId", args.questionId)
+      )
+      .first();
+
+    if (existing) {
+      // Update existing response with follow-up data
+      const currentFollowUps = existing.followUpQuestions || [];
+      const currentFollowUpAnswers = existing.followUpAnswers || [];
+      
+      await ctx.db.patch(existing._id, {
+        candidateAnswer: args.candidateAnswer,
+        score: Math.max(existing.score, args.score), // Keep highest score
+        evaluationFeedback: args.evaluationFeedback || existing.evaluationFeedback,
+        followUpQuestions: [...currentFollowUps, ...(args.followUpQuestions || [])],
+        followUpAnswers: [...currentFollowUpAnswers, args.candidateAnswer],
+      });
+      return existing._id;
+    }
+
     const responseId = await ctx.db.insert("interviewResponses", {
       ...args,
       answeredAt: Date.now(),
