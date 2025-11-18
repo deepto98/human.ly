@@ -73,7 +73,8 @@ function InterviewPage() {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const recognitionRef = useRef<any>(null);
 
-  const currentQuestion = questions[currentQuestionIndex];
+  const currentQuestion =
+    currentQuestionIndex >= 0 ? questions[currentQuestionIndex] : undefined;
   const isIntroQuestion = currentQuestionIndex === -1;
 
   // Request permissions and show video feeds
@@ -258,35 +259,29 @@ function InterviewPage() {
     
     // Wait for acknowledgment to finish, then move to first question
     setTimeout(() => {
-      setCurrentQuestionIndex(0);
-      // Ask the first question after state updates
+      const firstIndex = 0;
+      setCurrentQuestionIndex(firstIndex);
+      // Ask the first question after state updates, using explicit index
       setTimeout(() => {
         if (questions.length > 0) {
-          const q = questions[0];
-          const questionText = `Question 1: ${q.questionText}`;
-          setMessages(prev => [...prev, { sender: "agent", text: questionText }]);
-          speak(questionText);
-          setLastQuestionId(q._id);
-          setFollowUpCount(0);
-          setAwaitingFollowUp(false);
-          setCurrentFollowUpQuestion(null);
+          askQuestionAtIndex(firstIndex);
         }
       }, 100);
     }, 2000);
   };
 
-  // Ask next question
-  const askNextQuestion = () => {
-    if (currentQuestionIndex < questions.length && currentQuestionIndex >= 0) {
-      const q = questions[currentQuestionIndex];
-      const questionText = `Question ${currentQuestionIndex + 1}: ${q.questionText}`;
+  // Ask question at a specific index (avoids stale state in closures)
+  const askQuestionAtIndex = (index: number) => {
+    if (index < questions.length && index >= 0) {
+      const q = questions[index];
+      const questionText = `Question ${index + 1}: ${q.questionText}`;
       setMessages(prev => [...prev, { sender: "agent", text: questionText }]);
       speak(questionText);
       setLastQuestionId(q._id);
       setFollowUpCount(0);
       setAwaitingFollowUp(false);
       setCurrentFollowUpQuestion(null);
-    } else if (currentQuestionIndex >= questions.length) {
+    } else if (index >= questions.length) {
       // Interview complete
       finishInterview();
     }
@@ -354,14 +349,10 @@ function InterviewPage() {
     const nextIndex = currentQuestionIndex + 1;
     setCurrentQuestionIndex(nextIndex);
     
-    // Immediately ask next question if available
-    if (nextIndex < questions.length) {
-      setTimeout(() => {
-        askNextQuestion();
-      }, 500);
-    } else {
-      finishInterview();
-    }
+    // Immediately ask next question if available, using explicit index
+    setTimeout(() => {
+      askQuestionAtIndex(nextIndex);
+    }, 500);
   };
 
   // Submit follow-up answer
@@ -407,14 +398,10 @@ function InterviewPage() {
       const nextIndex = currentQuestionIndex + 1;
       setCurrentQuestionIndex(nextIndex);
       
-      // Immediately ask next question if available
-      if (nextIndex < questions.length) {
-        setTimeout(() => {
-          askNextQuestion();
-        }, 500);
-      } else {
-        finishInterview();
-      }
+      // Immediately ask next question if available, using explicit index
+      setTimeout(() => {
+        askQuestionAtIndex(nextIndex);
+      }, 500);
     }
   };
 

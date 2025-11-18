@@ -5,6 +5,8 @@ import { api } from "@cvx/_generated/api";
 import { ArrowLeft, User, Calendar, Award, Eye } from "lucide-react";
 import { cn } from "@/utils/misc";
 import { AppLayout } from "@/ui/app-layout";
+import { Route as AttemptDetailRoute } from "./$agentId.attempts.$attemptId";
+import { Route as AttemptDetailRoute } from "./$agentId.attempts.$attemptId";
 
 export const Route = createFileRoute("/_app/_auth/agents/$agentId/attempts")({
   component: AgentAttemptsPage,
