@@ -145,7 +145,8 @@ function AgentAttemptsPage() {
                         </div>
 
                         <Link
-                          to={`/agents/${agentId}/attempts/${interview._id}`}
+                          to="/agents/$agentId/attempts/$attemptId"
+                          params={{ agentId: agentId as string, attemptId: interview._id as string }}
                           className="ml-4"
                         >
                           <div className="relative">

@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useConvexMutation, useConvexAction, convexQuery } from "@convex-dev/react-query";
 import { api } from "@cvx/_generated/api";
 import { Input } from "@/ui/input";
-import { Loader2, Video, Monitor, Mic, MicOff, Send } from "lucide-react";
+import { Loader2, Video, Monitor, Mic, MicOff, Send, ArrowRight } from "lucide-react";
 import { cn } from "@/utils/misc";
 import Webcam from "react-webcam";
 import RecordRTC from "recordrtc";
@@ -59,6 +59,7 @@ function InterviewPage() {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
+  const [isEvaluating, setIsEvaluating] = useState(false);
   
   const webcamRef = useRef<Webcam>(null);
   const screenVideoRef = useRef<HTMLVideoElement>(null);
@@ -136,8 +137,7 @@ function InterviewPage() {
         updateAudioLevel();
       }
       
-      // Start interview immediately after permissions
-      await handleStartInterview();
+      // Don't auto-start, just show ready state
     } catch (error) {
       console.error("Permission denied:", error);
       alert("Camera and screen sharing permissions are required for this interview.");
@@ -147,10 +147,21 @@ function InterviewPage() {
   // Text-to-speech for agent
   const speak = (text: string) => {
     if ('speechSynthesis' in window) {
+      // Stop any ongoing speech first
+      window.speechSynthesis.cancel();
+      
       setIsSpeaking(true);
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.onend = () => setIsSpeaking(false);
       window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  // Stop speaking
+  const stopSpeaking = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
     }
   };
 
@@ -231,6 +242,7 @@ function InterviewPage() {
   const handleSubmitIntro = async () => {
     if (!candidateIntro.trim() || !interviewId) return;
     
+    stopSpeaking(); // Stop any ongoing speech
     setMessages(prev => [...prev, { sender: "candidate", text: candidateIntro }]);
     
     // Save intro to backend
@@ -239,12 +251,12 @@ function InterviewPage() {
       candidateIntro,
     });
     
-    // Agent acknowledges
+    // Agent acknowledges and moves to first question
     const acknowledgeText = "Thank you for sharing! Let's begin with the first question.";
     setMessages(prev => [...prev, { sender: "agent", text: acknowledgeText }]);
     speak(acknowledgeText);
     
-    // Move to first question and ask it immediately
+    // Wait for acknowledgment to finish, then move to first question
     setTimeout(() => {
       setCurrentQuestionIndex(0);
       // Ask the first question after state updates
@@ -282,7 +294,7 @@ function InterviewPage() {
 
   // Submit answer
   const handleSubmitAnswer = async () => {
-    if (!interviewId || !currentQuestion || awaitingFollowUp) return;
+    if (!interviewId || !currentQuestion || awaitingFollowUp || isEvaluating) return;
 
     const answer = currentQuestion.type === "mcq" 
       ? selectedOption?.toString() || ""
@@ -291,11 +303,19 @@ function InterviewPage() {
     if (!answer.trim() && currentQuestion.type === "subjective") return;
     if (selectedOption === null && currentQuestion.type === "mcq") return;
 
+    // Stop any ongoing speech
+    stopSpeaking();
+
     // Add candidate's answer to messages
     const answerText = currentQuestion.type === "mcq"
       ? currentQuestion.options![selectedOption!]
       : answer;
     setMessages(prev => [...prev, { sender: "candidate", text: answerText }]);
+
+    // Show evaluating state for subjective questions
+    if (currentQuestion.type === "subjective") {
+      setIsEvaluating(true);
+    }
 
     // Evaluate answer (don't show correct/incorrect to candidate)
     const result = await submitAnswer({
@@ -304,15 +324,19 @@ function InterviewPage() {
       candidateAnswer: answer,
     });
 
+    setIsEvaluating(false);
+
     // For subjective questions, check if we should ask follow-up
     if (currentQuestion.type === "subjective" && agentData?.enableFollowUps && 
         followUpCount < (agentData.maxFollowUps || 2)) {
       
       // Generate interactive follow-up
+      setIsEvaluating(true);
       const followUp = await generateFollowUp({
         questionId: currentQuestion._id as any,
         candidateAnswer: answer,
       });
+      setIsEvaluating(false);
 
       setCurrentFollowUpQuestion(followUp as string);
       setMessages(prev => [...prev, { sender: "agent", text: followUp as string }]);
@@ -328,18 +352,22 @@ function InterviewPage() {
     setSelectedOption(null);
     setCurrentQuestionIndex(prev => prev + 1);
     
-    setTimeout(() => {
-      if (currentQuestionIndex + 1 < questions.length) {
+    // Immediately ask next question if available
+    if (currentQuestionIndex + 1 < questions.length) {
+      setTimeout(() => {
         askNextQuestion();
-      } else {
-        finishInterview();
-      }
-    }, 1000);
+      }, 500);
+    } else {
+      finishInterview();
+    }
   };
 
   // Submit follow-up answer
   const handleSubmitFollowUp = async () => {
-    if (!followUpAnswer.trim() || !lastQuestionId || !interviewId || !currentFollowUpQuestion) return;
+    if (!followUpAnswer.trim() || !lastQuestionId || !interviewId || !currentFollowUpQuestion || isEvaluating) return;
+
+    // Stop any ongoing speech
+    stopSpeaking();
 
     setMessages(prev => [...prev, { sender: "candidate", text: followUpAnswer }]);
 
@@ -354,10 +382,12 @@ function InterviewPage() {
     // Check if more follow-ups or move on
     if (agentData?.enableFollowUps && followUpCount < (agentData.maxFollowUps || 2)) {
       // Generate another follow-up
+      setIsEvaluating(true);
       const followUp = await generateFollowUp({
         questionId: lastQuestionId as any,
         candidateAnswer: followUpAnswer,
       });
+      setIsEvaluating(false);
 
       setCurrentFollowUpQuestion(followUp as string);
       setMessages(prev => [...prev, { sender: "agent", text: followUp as string }]);
@@ -373,13 +403,14 @@ function InterviewPage() {
       setSelectedOption(null);
       setCurrentQuestionIndex(prev => prev + 1);
       
-      setTimeout(() => {
-        if (currentQuestionIndex + 1 < questions.length) {
+      // Immediately ask next question if available
+      if (currentQuestionIndex + 1 < questions.length) {
+        setTimeout(() => {
           askNextQuestion();
-        } else {
-          finishInterview();
-        }
-      }, 1000);
+        }, 500);
+      } else {
+        finishInterview();
+      }
     }
   };
 
@@ -537,16 +568,29 @@ function InterviewPage() {
                   This interview requires camera and screen sharing access for recording purposes.
                 </p>
 
-                <button
-                  onClick={requestPermissions}
-                  className="relative w-full group"
-                >
-                  <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
-                  <div className="relative flex items-center justify-center gap-2 border-[4px] border-black bg-orange-400 px-8 py-4 font-bold uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px]">
-                    <Video className="h-6 w-6" />
-                    Grant Camera & Screen Access
-                  </div>
-                </button>
+                {!hasPermissions ? (
+                  <button
+                    onClick={requestPermissions}
+                    className="relative w-full group"
+                  >
+                    <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+                    <div className="relative flex items-center justify-center gap-2 border-[4px] border-black bg-orange-400 px-8 py-4 font-bold uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px]">
+                      <Video className="h-6 w-6" />
+                      Grant Camera & Screen Access
+                    </div>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleStartInterview}
+                    className="relative w-full group"
+                  >
+                    <div className="absolute -bottom-2 -right-2 h-full w-full bg-black"></div>
+                    <div className="relative flex items-center justify-center gap-2 border-[4px] border-black bg-green-400 px-8 py-4 font-bold uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px]">
+                      <ArrowRight className="h-6 w-6" />
+                      Start Interview
+                    </div>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -627,7 +671,7 @@ function InterviewPage() {
                 {!isIntroQuestion && currentQuestion && (
                   <div className="mt-8 w-full max-w-2xl">
                     <div className="relative border-[3px] border-black bg-white p-6">
-                      <h4 className="text-xl font-black mb-4">Current Question</h4>
+                      <h4 className="text-xl font-black mb-4">Question {currentQuestionIndex + 1}</h4>
                       <p className="text-lg font-medium mb-4">{currentQuestion.questionText}</p>
                       
                       {currentQuestion.type === "mcq" && currentQuestion.options && (
@@ -719,6 +763,7 @@ function InterviewPage() {
                         <button
                           onClick={isIntroQuestion ? handleSubmitIntro : handleSubmitAnswer}
                           disabled={
+                            isEvaluating ||
                             isIntroQuestion ? !candidateIntro.trim() :
                             (currentQuestion.type === "mcq" && selectedOption === null) ||
                             (currentQuestion.type === "subjective" && !currentAnswer.trim())
@@ -727,8 +772,17 @@ function InterviewPage() {
                         >
                           <div className="absolute -bottom-1 -right-1 h-full w-full bg-black"></div>
                           <div className="relative flex items-center justify-center gap-2 border-[2px] border-black bg-orange-400 px-6 py-3 font-bold uppercase">
-                            <Send className="h-5 w-5" />
-                            {isIntroQuestion ? "Submit Introduction" : "Submit Answer"}
+                            {isEvaluating ? (
+                              <>
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                                Evaluating...
+                              </>
+                            ) : (
+                              <>
+                                <Send className="h-5 w-5" />
+                                {isIntroQuestion ? "Submit Introduction" : "Submit Answer"}
+                              </>
+                            )}
                           </div>
                         </button>
                       )}
