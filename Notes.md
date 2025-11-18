@@ -1,5 +1,5 @@
 npx @convex-dev/auth to set site_url
-
+npx convex deploy
 1. font color
 2. remove alerts
 3. google auth
@@ -13,3 +13,5 @@ npx @convex-dev/auth to set site_url
 11. draft at each step and move back and forth option
 
 mobile - nav options
+
+ts errors on build

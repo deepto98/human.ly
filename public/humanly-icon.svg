@@ -1,0 +1,27 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Neobrutalist offset shadow -->
+  <rect x="2" y="2" width="36" height="36" fill="black"/>
+  
+  <!-- Main icon container -->
+  <rect x="0" y="0" width="36" height="36" fill="url(#gradient)" stroke="black" stroke-width="3"/>
+  
+  <!-- Human icon representing interview agent -->
+  <!-- Head -->
+  <circle cx="18" cy="12" r="4.5" fill="black"/>
+  
+  <!-- Body -->
+  <path d="M18 18.5C13.75 18.5 11 20.95 11 24.25V28C11 29.25 11.75 30.5 13.5 30.5H22.5C24.25 30.5 25 29.25 25 28V24.25C25 20.95 22.25 18.5 18 18.5Z" fill="black"/>
+  
+  <!-- AI indicator dots -->
+  <circle cx="15" cy="25" r="1.2" fill="white"/>
+  <circle cx="18" cy="25" r="1.2" fill="white"/>
+  <circle cx="21" cy="25" r="1.2" fill="white"/>
+  
+  <defs>
+    <linearGradient id="gradient" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fb923c"/>
+      <stop offset="1" stop-color="#f97316"/>
+    </linearGradient>
+  </defs>
+</svg>
+
