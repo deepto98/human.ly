@@ -239,15 +239,27 @@ function InterviewPage() {
       candidateIntro,
     });
     
-    // Agent acknowledges and starts first question
+    // Agent acknowledges
     const acknowledgeText = "Thank you for sharing! Let's begin with the first question.";
     setMessages(prev => [...prev, { sender: "agent", text: acknowledgeText }]);
     speak(acknowledgeText);
     
-    // Move to first question
-    setCurrentQuestionIndex(0);
+    // Move to first question and ask it immediately
     setTimeout(() => {
-      askNextQuestion();
+      setCurrentQuestionIndex(0);
+      // Ask the first question after state updates
+      setTimeout(() => {
+        if (questions.length > 0) {
+          const q = questions[0];
+          const questionText = `Question 1: ${q.questionText}`;
+          setMessages(prev => [...prev, { sender: "agent", text: questionText }]);
+          speak(questionText);
+          setLastQuestionId(q._id);
+          setFollowUpCount(0);
+          setAwaitingFollowUp(false);
+          setCurrentFollowUpQuestion(null);
+        }
+      }, 100);
     }, 2000);
   };
 

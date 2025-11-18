@@ -4,6 +4,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@cvx/_generated/api";
 import { ArrowLeft, User, Calendar, Award, Eye } from "lucide-react";
 import { cn } from "@/utils/misc";
+import { AppLayout } from "@/ui/app-layout";
 
 export const Route = createFileRoute("/_app/_auth/agents/$agentId/attempts")({
   component: AgentAttemptsPage,
@@ -22,14 +23,16 @@ function AgentAttemptsPage() {
 
   if (!agent) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-amber-50">
-        <div className="text-2xl font-bold">Loading...</div>
-      </div>
+      <AppLayout>
+        <div className="flex min-h-screen items-center justify-center bg-amber-50">
+          <div className="text-2xl font-bold">Loading...</div>
+        </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-amber-50 p-6">
+    <AppLayout>
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-8">
@@ -167,7 +170,7 @@ function AgentAttemptsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }
 

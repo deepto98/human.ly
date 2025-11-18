@@ -5,7 +5,7 @@
 import { v } from "convex/values";
 import { action, mutation, query } from "./_generated/server";
 import { api } from "./_generated/api";
-import { evaluateSubjectiveAnswer, generateFollowUpQuestion, getLLM } from "./lib/openai";
+import { evaluateSubjectiveAnswer, getLLM } from "./lib/openai";
 
 /**
  * Start a new interview session
@@ -132,7 +132,7 @@ export const generateFollowUp = action({
     questionId: v.id("questions"),
     candidateAnswer: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<string> => {
     const question = await ctx.runQuery(api.questions.getQuestion, {
       questionId: args.questionId,
     });
@@ -155,7 +155,7 @@ export const generateFollowUp = action({
       ? evaluation.missedPoints.join(", ")
       : "some key aspects";
 
-    const prompt = `You are conducting an interview. The candidate answered a subjective question, but missed some important points. 
+    const prompt: string = `You are conducting an interview. The candidate answered a subjective question, but missed some important points. 
 
 Original Question: ${question.questionText}
 

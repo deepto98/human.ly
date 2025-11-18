@@ -7,7 +7,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { OPENAI_API_KEY } from "../env";
 
 // Initialize OpenAI LLM
-function getLLM(temperature: number = 0.7) {
+export function getLLM(temperature: number = 0.7) {
   if (!OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY is not configured");
   }
