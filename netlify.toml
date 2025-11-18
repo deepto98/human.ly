@@ -4,5 +4,5 @@
   status = 200
 
 [context.production]
-  command = "npx convex deploy --cmd 'npx vite build'"
+  command = "npx convex deploy --cmd 'npx vite build' && npx @convex-dev/auth --prod"
   # command = "npx convex deploy --cmd 'npm run build'"
