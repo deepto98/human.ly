@@ -97,9 +97,9 @@ function Index() {
 
             {/* Subheading */}
             <p className="mx-auto mb-12 max-w-2xl text-xl font-medium text-gray-800 md:text-2xl">
-              Create AI-powered interview agents that adapt, evaluate, and
-              engage. Transform how you assess talent with intelligent,
-              conversational interviews.
+              Design conversational interview agents in 4 simple steps. Define knowledge,
+              generate questions, configure personality, and share. Your candidates
+              interact with human-like agents that speak, listen, and evaluate in real-time.
             </p>
 
             {/* CTA Buttons */}

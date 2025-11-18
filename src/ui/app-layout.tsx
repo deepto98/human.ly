@@ -120,6 +120,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                         onClick={() => {
                           signOut();
                           setIsUserMenuOpen(false);
+                          navigate({ to: "/" });
                         }}
                         className="w-full text-left px-3 py-2 font-medium hover:bg-red-100 transition-colors flex items-center gap-2 text-red-600"
                       >

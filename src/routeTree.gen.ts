@@ -17,8 +17,6 @@ import { Route as AppImport } from './routes/_app'
 import { Route as IndexImport } from './routes/index'
 import { Route as InterviewShareableLinkImport } from './routes/interview.$shareableLink'
 import { Route as AppAuthImport } from './routes/_app/_auth'
-import { Route as AppLoginLayoutImport } from './routes/_app/login/_layout'
-import { Route as AppLoginLayoutIndexImport } from './routes/_app/login/_layout.index'
 import { Route as AppAuthOnboardingLayoutImport } from './routes/_app/_auth/onboarding/_layout'
 import { Route as AppAuthDashboardLayoutImport } from './routes/_app/_auth/dashboard/_layout'
 import { Route as AppAuthDashboardLayoutIndexImport } from './routes/_app/_auth/dashboard/_layout.index'
@@ -36,7 +34,6 @@ import { Route as AppAuthAgentsAgentIdAttemptsAttemptIdImport } from './routes/_
 
 // Create Virtual Routes
 
-const AppLoginImport = createFileRoute('/_app/login')()
 const AppAuthOnboardingImport = createFileRoute('/_app/_auth/onboarding')()
 const AppAuthDashboardImport = createFileRoute('/_app/_auth/dashboard')()
 const AppAuthAgentsCreateImport = createFileRoute('/_app/_auth/agents/create')()
@@ -51,11 +48,6 @@ const AppRoute = AppImport.update({
 const IndexRoute = IndexImport.update({
   path: '/',
   getParentRoute: () => rootRoute,
-} as any)
-
-const AppLoginRoute = AppLoginImport.update({
-  path: '/login',
-  getParentRoute: () => AppRoute,
 } as any)
 
 const InterviewShareableLinkRoute = InterviewShareableLinkImport.update({
@@ -78,19 +70,9 @@ const AppAuthDashboardRoute = AppAuthDashboardImport.update({
   getParentRoute: () => AppAuthRoute,
 } as any)
 
-const AppLoginLayoutRoute = AppLoginLayoutImport.update({
-  id: '/_layout',
-  getParentRoute: () => AppLoginRoute,
-} as any)
-
 const AppAuthAgentsCreateRoute = AppAuthAgentsCreateImport.update({
   path: '/agents/create',
   getParentRoute: () => AppAuthRoute,
-} as any)
-
-const AppLoginLayoutIndexRoute = AppLoginLayoutIndexImport.update({
-  path: '/',
-  getParentRoute: () => AppLoginLayoutRoute,
 } as any)
 
 const AppAuthOnboardingLayoutRoute = AppAuthOnboardingLayoutImport.update({
@@ -206,20 +188,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InterviewShareableLinkImport
       parentRoute: typeof rootRoute
     }
-    '/_app/login': {
-      id: '/_app/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof AppLoginImport
-      parentRoute: typeof AppImport
-    }
-    '/_app/login/_layout': {
-      id: '/_app/login/_layout'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof AppLoginLayoutImport
-      parentRoute: typeof AppLoginRoute
-    }
     '/_app/_auth/dashboard': {
       id: '/_app/_auth/dashboard'
       path: '/dashboard'
@@ -247,13 +215,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/onboarding'
       preLoaderRoute: typeof AppAuthOnboardingLayoutImport
       parentRoute: typeof AppAuthOnboardingRoute
-    }
-    '/_app/login/_layout/': {
-      id: '/_app/login/_layout/'
-      path: '/'
-      fullPath: '/login/'
-      preLoaderRoute: typeof AppLoginLayoutIndexImport
-      parentRoute: typeof AppLoginLayoutImport
     }
     '/_app/_auth/agents/$agentId/attempts': {
       id: '/_app/_auth/agents/$agentId/attempts'
@@ -384,11 +345,6 @@ export const routeTree = rootRoute.addChildren({
           }),
       }),
     }),
-    AppLoginRoute: AppLoginRoute.addChildren({
-      AppLoginLayoutRoute: AppLoginLayoutRoute.addChildren({
-        AppLoginLayoutIndexRoute,
-      }),
-    }),
   }),
   InterviewShareableLinkRoute,
 })
@@ -412,8 +368,7 @@ export const routeTree = rootRoute.addChildren({
     "/_app": {
       "filePath": "_app.tsx",
       "children": [
-        "/_app/_auth",
-        "/_app/login"
+        "/_app/_auth"
       ]
     },
     "/_app/_auth": {
@@ -428,20 +383,6 @@ export const routeTree = rootRoute.addChildren({
     },
     "/interview/$shareableLink": {
       "filePath": "interview.$shareableLink.tsx"
-    },
-    "/_app/login": {
-      "filePath": "_app/login",
-      "parent": "/_app",
-      "children": [
-        "/_app/login/_layout"
-      ]
-    },
-    "/_app/login/_layout": {
-      "filePath": "_app/login/_layout.tsx",
-      "parent": "/_app/login",
-      "children": [
-        "/_app/login/_layout/"
-      ]
     },
     "/_app/_auth/dashboard": {
       "filePath": "_app/_auth/dashboard",
@@ -472,10 +413,6 @@ export const routeTree = rootRoute.addChildren({
       "children": [
         "/_app/_auth/onboarding/_layout/username"
       ]
-    },
-    "/_app/login/_layout/": {
-      "filePath": "_app/login/_layout.index.tsx",
-      "parent": "/_app/login/_layout"
     },
     "/_app/_auth/agents/$agentId/attempts": {
       "filePath": "_app/_auth/agents/$agentId.attempts.tsx",

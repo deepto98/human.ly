@@ -15,3 +15,4 @@ npx convex deploy
 mobile - nav options
 
 ts errors on build
+remove login redirect on logout
