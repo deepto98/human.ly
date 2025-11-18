@@ -1,12 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useMatches } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@cvx/_generated/api";
 import { ArrowLeft, User, Calendar, Award, Eye } from "lucide-react";
 import { cn } from "@/utils/misc";
 import { AppLayout } from "@/ui/app-layout";
-import { Route as AttemptDetailRoute } from "./$agentId.attempts.$attemptId";
-import { Route as AttemptDetailRoute } from "./$agentId.attempts.$attemptId";
 
 export const Route = createFileRoute("/_app/_auth/agents/$agentId/attempts")({
   component: AgentAttemptsPage,
@@ -14,6 +12,18 @@ export const Route = createFileRoute("/_app/_auth/agents/$agentId/attempts")({
 
 function AgentAttemptsPage() {
   const { agentId } = Route.useParams();
+  const matches = useMatches();
+  
+  // Check if we're on the detail route (child route) by looking for attemptId in matches
+  const isDetailRoute = matches.some(m => 
+    m.routeId === '/_app/_auth/agents/$agentId/attempts/$attemptId' ||
+    (m.params && 'attemptId' in m.params)
+  );
+  
+  // If we're on the detail route, render Outlet instead of the list
+  if (isDetailRoute) {
+    return <Outlet />;
+  }
   
   const { data: agent } = useQuery(
     convexQuery(api.agents.getAgent, { agentId: agentId as any })
